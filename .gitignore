@@ -1,0 +1,8 @@
+.satysfi/dist/fonts
+
+*.satysfi-aux
+
+/main.pdf
+/shinchoku-tairiku-08.pdf
+
+/cover.xcf

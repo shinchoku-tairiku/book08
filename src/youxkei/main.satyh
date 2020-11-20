@@ -1,0 +1,6 @@
+@import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+
+let-block +youxkei = '<
+  +chapter{youxkei担当章}{謎の名言絶対にいる}<
+  >
+>
