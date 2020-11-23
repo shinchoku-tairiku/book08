@@ -1,6 +1,111 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
 
 let-block +yutopp = '<
-  +chapter{yutopp担当章}{謎の名言絶対にいる}<
+  +chapter{yutopp担当章}{じゃあ 大丈夫！　できるぷり。 - みれぃ}<
++p {
+
+サーバーサイドばかりやっとるUnity初心者が先人の知見をひたすらに参考にしながらトゥーンシェーダを書きモデルのレンダリングを行い、またBlenderでfacial rigを組み、それをARKitのfacial trackingで動かせるようにするまでの道のりを書いていきます。
+
+間違いの指摘やより良い方法などがありましたら是非教えていただけると幸いです。
+
+必要なもの
+
+- Windows 10 20H2
+- Unity 2020.1.9f1
+- Blender 2.83.2
+- iPad Pro 11 (2018) iPadOS 14.2
+  - ARKitが動けばなんでも良さそう
+- iFacialMocap (1.1.2)
+  - 自身は手元にXCode環境が無いためアプリを購入しました…
+- めげない心
+- やっていく気持ち
+
+- blender (facial rig -> blendshape) -> fbx
+- iPad -(UDP)-> Windows (Unity)
+
+# モチベーション
+
+ア！
+
+# モデルとマテリアルの準備
+
+TODO: 色々書く
+
+自作のトゥーンシェーダを書いてみる。
+
+# シェーダーを書く
+
+UnityのシェーダはShaderLabという言語で記述し、その一部でHLSLを利用してシェーダ本体のロジックを実装します。
+
+https://docs.unity3d.com/ja/2020.1/Manual/SL-ShadingLanguage.html
+
+Unityの提供するマクロなどを利用して、なるべくプラットフォーム依存にならないようにHLSLを記述することで、ビルドターゲットの各プラットフォームで利用されるシェーダにUnityがよしなに変換を行ってくれます。
+
+https://docs.unity3d.com/ja/2020.1/Manual/SL-Reference.html
+
+さて、シェーダを書いたところで、それを用いて画面に描画するためには手順に沿ってUnityからシェーダを呼び出して貰わなければなりません。
+そのためには、レンダリングパイプラインというものをざっと知っておく必要があります。
+
+## Unityのレンダリングパイプライン
+
+レンダリングパイプラインとは、シーンの情報を画面に描画にする一連の処理のことを指します。現状Unityは以下のレンダリングパイプラインを提供してくれています。
+
+- Built-in Render Pipeline
+- Scriptable Render Pipeline (SRP)
+  - Universal Render Pipeline (URP) [旧LWRP]
+  - High Definition Render Pipeline (HDRP)
+
+`Built-in Render Pipeline` は、Unity組み込みのデフォルトのレンダリングパイプラインです。インターネット上で公開されていて特に断りがないようなUnityのシェーダは、このパイプライン用に記載されていると思って良さそうです。
+最も汎用なパイプラインで、これまで書かれてきたシェーダの資産ををそのまま使えますが、組み込みであるためパイプラインそのもののカスタマイズは行いにくく、性能面においてどの環境においても普通といった感じの性能となります。
+
+`Scriptable Render Pipeline （SRP)` は、新しくUnity 2018.1 beta から提供された、カスタム可能なレンダリングパイプラインです。
+レンダリングパイプラインの内部では様々な処理が行われますが、それらをスクリプトで自由に構築できるようにすることで最適化や目的や性能に合わせての処理の取捨選択を行えるため、パフォーマンスの調整が可能になります。
+
+Unityが提供するビルド済みのSRPとして、モバイルからハイエンドまでの幅広いプラットフォーム向けに最適化された`Universal Render Pipeline (URP)` と、
+高性能なプラットフォーム向けに絞り表現力の高い`High Definition Render Pipeline (HDRP)`があります。
+
+https://docs.unity3d.com/ja/2020.1/Manual/render-pipelines.html
+
+これらのレンダリングパイプライン同士には互換性はないため、開発を始める前にどのレンダリングパイプラインを用いるか決定する必要があります。(レンダリングパイプラインを切り替える場合は、シェーダもそのパイプラインに向けて調節・書き直す必要があります)
+
+正直なところ`Built-in Render Pipeline`で全く困ることはない（資料も多いし）のですが、ここでは今後を見越した勉強のため `URP` を用いてシェーダを書いていきたいと思います。
+
+TODO: 間に合わん場合は普通にBuilt-inでの話を書く。
+
+## URPでトゥーンシェーダを書く
+
+TODO: URPのバージョン書く。
+
+### 座標系
+
+### ベースカラー
+
+### テクスチャ
+
+#### UV座標 (Tangent space)
+
+### 影
+
+### アウトライン
+
+### リムライト
+
+### 完成
+
+
+
+# Blenderでfacial rig
+
+(ここ普通に書き終わらん気がしている)
+
+# Facial capture で動かす
+
+(ここ普通に書き終わらん気がしている)
+
+# まとめ
+
+(ここ普通に書き終わらん気がしている)
+
+}    
   >
 >
