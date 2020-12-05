@@ -1,6 +1,116 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+@import: local
 
 let-block +pocketberserker = '<
-  +chapter{pocketberserker担当章}{謎の名言絶対にいる}<
+  +chapter?*?:(bib-items){Firebaseから始めるWebサービス開発}{終わりの始まり - ???}<
+    +section{はじめに}<
+      +p {
+        技術的な発展に伴い、Webサービス開発を始めるための敷居は2010年代初頭に比べて圧倒的に下がっています。
+      }
+      +p {
+        本章では、筆者が2020年時点で主に利用しているFirebaseとTypeScriptを用いたミニマルなサービス開発の際に感じたことを書き連ねます。
+      }
+    >
+    +section{FirebaseとTypeScriptによるWebサービス開発}<
+      +p {
+        TODO: それっぽいことを書く。
+      }
+      +subsection{Firebase Hosting}<
+        +p {
+          TODO: ちゃんと書く
+        }
+      >
+      +subsection{Web FrontendのFramework}<
+        +p {
+          TODO: 個人の趣味。筆者はもっぱらNext.js。
+        }
+      >
+      +subsection{Firebase Authentication}<
+        +p {
+          簡単に使えて便利ですが、\code(`onAuthStateChanged`);による認証取得に待たされるためユーザー体験的には微妙、という問題があります。
+        }
+        +p {
+          以降、筆者に利用経験のあるプロバイダーについて触れます。
+        }
+        +subsubsection{Googleアカウント}<
+          +p {
+            TODO: ちゃんと書く
+          }
+        >
+        +subsubsection{メールリンク}<
+          +p {
+            公式ドキュメントが一部不親切なのではまり所があります。
+          }
+        >
+        +subsubsection{Twitter}<
+          +p {
+            TODO: 原因不明のエラーが発生することもあってあまりおすすめできない？
+          }
+        >
+      >
+      +subsection{Firestore}<
+        +p {
+          TODO: ちゃんと書く
+        }
+      >
+      +subsection{Cloud Functions for Firebase}<
+        +p {
+          TODO: ちゃんと書く
+        }
+      >
+      +subsection{Cloud Storage}<
+        +p {
+          TODO: ちゃんと書く
+        }
+      >
+    >
+    +section{FirebaseとGCP}<
+      +subsection{Functions? GAE? Cloud Run?}<
+        +p {
+          筆者はだいたい次のように使い分けています。
+        }
+        +listing {
+          * Firestoreのトリガー: Cloud Functions for Firebase
+          * Cloud Storageのトリガー: Cloud Functions for Firebase
+          * 簡単なスケジューラ: Cloud Functions for Firebase
+          * 簡単なPubSub: Cloud Functions for Firebase
+          * Web UI用のAPI: GAE
+          * 重量級の依存ライブラリ: Cloud Run
+          * 他言語で実装: Cloud Run
+        }
+        +p {
+          基本的にな戦略としては、序盤はCloud Functionsで開発していき、問題が発生したら別の道具に切り替えます。
+          例えば、PubSubの受信側で重たい処理をしたいときはCloud Runを使うことにしています。
+        }
+        +p {
+          Cloud FunctionsやCloud Runはcold startが存在する関係上、どうしても素早くレスポンスを返すことができない場合があります。
+          Node.jsではプロセス起動時にモジュール読み込みが発生するため、実装次第ではこの問題がより顕著になります。
+          最適化するプラクティスが存在するとはいえ\footnote{Cloud Runで応答時間を最適化する方法は公式の記事\cite(`optimize-cloud-run-response-time`);があります}、0にできるものではありません。
+          Webサービスを実装するうえで、cold startによる応答遅延はユーザー体験の悪化につながるので、気になるようなら他の道具（GAE, GKE）を検討しましょう\footnote{スモールスタートにするならGAE一択だと思います}。
+        }
+      >
+      +subsection{Firestore? RDB?}<
+        +p {
+          TODO: 困ったらRDB…だけどそのときは言語も変える
+        }
+      >
+    >
+    +section{Firebaseでカバーできない部分}<
+      +subsection{検索}<
+        +p {
+          TODO: AlgoliaやElasticsearchを使いましょう
+        }
+      >
+      +subsection{メール送信}<
+        +p {
+          TODO: SendGridやmailgunを使いましょう
+        }
+      >
+      +subsection{決済}<
+        +p {
+          TODO: 決済サービスを使いましょう
+        }
+      >
+    }
   >
 >

@@ -1,0 +1,20 @@
+@import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+
+let bib-items =
+  [ (`firebase`, BibMisc
+    (|
+      title = Some {Firebase};
+      author = None;
+      howpublished = Some {\url(`https://firebase.google.com/?hl=ja`);};
+      year = None;
+      month = None;
+    |));
+    [ (`optimize-cloud-run-response-time`, BibMisc
+    (|
+      title = Some {Cloud Runの応答時間を最適化する3つの方法};
+      author = None;
+      howpublished = Some {\url(`https://cloud.google.com/blog/ja/products/gcp/3-ways-optimize-cloud-run-response-times`);};
+      year = None;
+      month = None;
+    |));
+  ]
