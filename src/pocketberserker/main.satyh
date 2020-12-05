@@ -13,11 +13,21 @@ let-block +pocketberserker = '<
     >
     +section{FirebaseとTypeScriptによるWebサービス開発}<
       +p {
-        TODO: それっぽいことを書く。
+        Firebase\cite(`fierbase`);はGoogleが提供するmBaaSです。
+        モバイルのBackendに利用されるほか、Webサービスのバックエンドとして利用されることもあります。
+      }
+      +p {
+        Firebaseの利点は手軽に素早くサービスを構築できるところです。
+        ホスティング、NoSQLデータベース、サーバーレス フレームワーク、ストレージが簡単に利用できるため、ある程度機能をもったサービスを効率よく開発できます。
       }
       +subsection{Firebase Hosting}<
         +p {
-          TODO: ちゃんと書く
+          FirebaseでWebページをホスティングする場合はFirebase Hostingを利用することがほとんどでしょう。
+          Firebase HostingはCloud FunctionsやCloud Runと組み合わせることで、動的コンテンツを生成して配信できるからです。
+        }
+        +p {
+          ホスティング機能のみが必要なときには、Firebase Hostingは他サービスに比べると見劣りする部分があるかもしれません。
+          そういったときはFirebaseにこだわらず別サービスを利用しましょう。
         }
       >
       +subsection{TypeScript}<
@@ -113,9 +123,9 @@ let-block +pocketberserker = '<
           Webサービスを実装するうえで、cold startによる応答遅延はユーザー体験の悪化につながるので、気になるようなら他の道具（GAE, GKE）を検討しましょう\footnote{スモールスタートにするならGAE一択だと思います}。
         }
       >
-      +subsection{Firestore? RDB?}<
+      +subsection{Firestore? Cloud SQL?}<
         +p {
-          TODO: 困ったらRDB…だけどそのときは言語も変える
+          TODO: 困ったらCloud SQL
         }
       >
     >
