@@ -9,7 +9,7 @@ let bib-items =
       year = None;
       month = None;
     |));
-    [ (`optimize-cloud-run-response-time`, BibMisc
+    (`optimize-cloud-run-response-time`, BibMisc
     (|
       title = Some {Cloud Runの応答時間を最適化する3つの方法};
       author = None;
