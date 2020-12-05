@@ -8,7 +8,7 @@ let-block +pocketberserker = '<
         技術的な発展に伴い、Webサービス開発を始めるための敷居は2010年代初頭に比べて圧倒的に下がっています。
       }
       +p {
-        本章では、筆者が2020年時点で主に利用しているFirebaseとTypeScriptを用いたミニマルなサービス開発の際に感じたことを書き連ねます。
+        本章では、筆者がFirebaseとTypeScriptを用いてミニマルなサービス開発した際に感じたことを書き連ねます。
       }
     >
     +section{FirebaseとTypeScriptによるWebサービス開発}<
@@ -18,6 +18,30 @@ let-block +pocketberserker = '<
       +subsection{Firebase Hosting}<
         +p {
           TODO: ちゃんと書く
+        }
+      >
+      +subsection{TypeScript}<
+        +p {
+          小さなWebサービスを素早く開発したい場合において、複数の言語を使うことはそれ自体が足枷となりがちです。
+          エコシステムが異なることによりビルドパイプラインが複雑化するからです。
+          サービスが複雑化する前提であれば、FrontendとBackendで言語を分けることを最初から考えることも一手ですが、とりあえず作ってみるという段階なら言語を絞ったほうが良いでしょう。
+        }
+        +p {
+          筆者がミニマムなWebサービスを開発する際は、主にTypeScriptを使用しています。
+        }
+        +listing {
+          * 静的型付け
+          * ひとつの言語である程度Backendも書ける
+          * Cloud Functions for Firebaseを利用するため
+        }
+        +p {
+          筆者は静的型チェックがないと足を打ちぬきがちなので、まずJavaScriptが選択肢から外れます。
+          そこから、エコシステムが煩雑でなく気楽に書ける言語（筆者の主観です）を考えた結果TypeScriptという安牌に落ち着きました。
+        }
+        +p {
+          なお、これはあくまで開発序盤の話です。
+          TypeScriptやNode.jsでは不足と感じたら、遠慮なく別言語を検討します。
+          例えば筆者の場合、RDBを導入すると決めたときは別言語に乗り換えるようにしています\footnote{昨今はprisma\cite(`prisma`);を使えばTypeScriptでも問題ないかもしれませんが、まだ未検証です……}。
         }
       >
       +subsection{Web FrontendのFramework}<
@@ -109,6 +133,12 @@ let-block +pocketberserker = '<
       +subsection{決済}<
         +p {
           TODO: 決済サービスを使いましょう
+        }
+      >
+      +subsection{OGP画像の動的生成}<
+        +p {
+          TODO: Cloud FunctionsやCloud Runでどうにかできることも多いよ
+          TODO: Cloudinary, Imgixなどを使うことも検討しましょう
         }
       >
     }

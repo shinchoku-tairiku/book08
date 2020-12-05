@@ -17,4 +17,12 @@ let bib-items =
       year = None;
       month = None;
     |));
+    (`prisma`, BibMisc
+    (|
+      title = Some {Prisma - Next-generation ORM for Node.js and TypeScript};
+      author = None;
+      howpublished = Some {\url(`https://www.prisma.io/`);};
+      year = None;
+      month = None;
+    |));
   ]
