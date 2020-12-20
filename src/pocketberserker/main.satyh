@@ -143,10 +143,55 @@ let-block +pocketberserker = '<
         +p {
           TODO: ちゃんと書く
         }
+        +p {
+          Firestore + TypeScriptで悩ましいのは型が弱い点です。
+          \code(`DocumentData`);という型は実質\code(`any`);のような存在なので、
+          別のオブジェクトを用意したうえで自力で型をつけてあげる必要があります。
+          \d-code(```
+            const snapshot = await firestore.collection("users").doc(id).get();
+            if (snapshot.exists) {
+              // DocumentData
+              const data = snapshot.data();
+              if (data) {
+                const user: User = {
+                  id: snapshot.id,
+                  name: data.name,
+                  email: data.email,
+                };
+                return user;
+              }
+            }
+            return null;
+          ```);
+        }
+        +p {
+          Firebaseでは、\code(`onSnapshot`);メソッドを使用することでドキュメントをリアルタイムに取得できます。
+          ロングポーリングやWebSocketを自前で実装することなくデータを受け取れるので、便利なことがあります。
+          例えば、お知らせ通知機能を作るとき、\code(`onSnapshot`);に用いてデータを取得すればWEB画面を開いているユーザーにリアルタイムに通知を行えます。
+        }
       >
       +subsection{Cloud Functions for Firebase}<
         +p {
-          TODO: ちゃんと書く
+          TODO: Cloud Functionsとは
+        }
+        +p {
+          Cloud Functionsの用途としては次のものがあります。
+        }
+        +listing {
+          * HTTPな処理
+          * Firestoreのトリガー
+          * Cloud Storageのトリガー
+          * スケジューラーによる定期実行
+          * PubSubによるイベントのsubscribe
+        }
+        +p {
+          このうちFirestoreのトリガーとCloud Storageのトリガーは（おそらく）代替がありません。
+          それ以外の機能はGCPの知識があれば他の言語や道具でもできることです。
+        }
+        +p {
+          Cloud Functions for Firebaseを利用するうえで癖が強いと感じる点は、entrypointをひとつにまとめる必要があることでしょう。
+          関数によっては不要な依存関係も含めてロードしなければならないので、実装次第でコールドスタートに時間がかかることがあります。
+          そういうこともあり、筆者は依存関係には常に注意を払い、重たい依存関係を持つ機能はCloud Runを検討することにしています。
         }
       >
       +subsection{Cloud Storage}<
@@ -163,8 +208,9 @@ let-block +pocketberserker = '<
         +listing {
           * Firestoreのトリガー: Cloud Functions for Firebase
           * Cloud Storageのトリガー: Cloud Functions for Firebase
-          * 簡単なスケジューラ: Cloud Functions for Firebase
+          * 簡単なスケジューラー: Cloud Functions for Firebase
           * 簡単なPubSub: Cloud Functions for Firebase
+          * Web UI用の簡素なAPI: Cloud Functions for Firebase
           * Web UI用のAPI: GAE
           * 重量級の依存ライブラリ: Cloud Run
           * 他言語で実装: Cloud Run
@@ -187,25 +233,51 @@ let-block +pocketberserker = '<
       >
     >
     +section{Firebaseでカバーできない部分}<
+      +p {
+        Firebaseは便利ですが何でも提供されているわけではありませんし、GCPと連携できるとはいえGCPにないものもあります。
+        ここでは、どういった機能がFirebaseにないか軽く紹介します。
+      }
       +subsection{検索}<
         +p {
-          TODO: AlgoliaやElasticsearchを使いましょう
+          FirestoreはRDBのような複雑なクエリ検索を行えないので、
+          検索機能を実装する際はAlgoliaやElasticsearchといった検索に特化したものを利用することになります。
+        }
+        +p {
+          Firestoreと検索サービスへのデータの同期にはCloud FunctionsのFirestoreトリガーを使うのが楽でしょう。
+          ユーザーの操作起因の処理と同時に更新を行う手もありますが、
+          処理が複雑化しエラーの可能性を増やしてしますし、
+          応答までのレスポンスも長くなってしまうのでわけてしまって良いのではないかと筆者は考えています。
         }
       >
       +subsection{メール送信}<
         +p {
-          TODO: SendGridやmailgunを使いましょう
+          Firebase（GCP）ではメール送信サービスは提供されていません。
+          サービス利用者に対し何らかのメールを送りたい場合はSendGridやmailgunといったSaaSを導入しましょう。
+        }
+        +p {
+          メール送信SaaSはそこそこお金がかかりますが、メールを送信したいなら諦めて金の弾丸を使うことをお勧めします。
+          安く済ませたいからと別の手段を用いた結果、サービスイン後にメールが送信できなくなった……という不幸に見舞われないだけでおつりがでます。
         }
       >
       +subsection{決済}<
         +p {
-          TODO: 決済サービスを使いましょう
+          （他のmBaaS系もそうですが）Firebaseは決済や振込といった機能をもっていません。
+          そのため、StripeやPAY.JPといった決済サービスや銀行APIを利用することになります。
+        }
+        +p {
+          決済について詳しい話を書こうとすると、それだけで1トピックになってしまうのでここではこれ以上の言及は避けたいと思います。
         }
       >
       +subsection{OGP画像の動的生成}<
         +p {
-          TODO: Cloud FunctionsやCloud Runでどうにかできることも多いよ
-          TODO: Cloudinary, Imgixなどを使うことも検討しましょう
+          単純なOGP画像の生成であればCloud FunctionsやCloud Runで処理してしまう手もありますが、
+          高度なことをするのであればCDNサービスに任せてしまうのも一手です。
+          CDNサービスでを用いるとユーザーの利用ブラウザにあわせて最適化した画像を配信できたりするからです。
+        }
+        +p {
+          筆者が利用経験を持つCDNサービスはCloudinaryとImgixです。
+          CloudinaryはそこそこわかりやすいAPIで無料枠があるためちょっとしたサービスに使いやすい印象をもっています。
+          Imgixは従量課金で毎月最低限の料金が発生しますが、GCSやS3との連携が用意でした。
         }
       >
     }
