@@ -17,8 +17,8 @@ let-block +pocketberserker = '<
         モバイルのBackendに利用されるほか、Webサービスのバックエンドとして利用されることもあります。
       }
       +p {
-        Firebaseの利点は手軽に素早くサービスを構築できるところです。
-        ホスティング、NoSQLデータベース、サーバーレス フレームワーク、ストレージが簡単に利用できるため、ある程度機能をもったサービスを効率よく開発できます。
+        Firebaseの利点は手軽に素早く構築できるところです。
+        ホスティング、認証、NoSQLデータベース、サーバーレス フレームワーク、ストレージが簡単に利用できるため、ある程度機能をもったサービスも効率よく開発できます。
       }
       +subsection{Firebase Hosting}<
         +p {
@@ -27,14 +27,15 @@ let-block +pocketberserker = '<
         }
         +p {
           ホスティング機能のみが必要なときには、Firebase Hostingは他サービスに比べると見劣りする部分があるかもしれません。
+          また、癖が強いように感じる部分もあるでしょう。
           そういったときはFirebaseにこだわらず別サービスを利用しましょう。
         }
       >
       +subsection{TypeScript}<
         +p {
-          小さなWebサービスを素早く開発したい場合において、複数の言語を使うことはそれ自体が足枷となりがちです。
+          小さなWebサービスを素早く開発したい場合において、複数の言語を使うことそれ自体が足枷になりがちです。
           エコシステムが異なることによりビルドパイプラインが複雑化するからです。
-          サービスが複雑化する前提であれば、FrontendとBackendで言語を分けることを最初から考えることも一手ですが、とりあえず作ってみるという段階なら言語を絞ったほうが良いでしょう。
+          サービスが複雑化する前提であれば、FrontendとBackendで言語を分けることも最初から考えるのですが、とりあえず作ってみるという段階なら言語を絞ったほうが良いと筆者は考えています。
         }
         +p {
           筆者がミニマムなWebサービスを開発する際は、主にTypeScriptを使用しています。
@@ -50,35 +51,91 @@ let-block +pocketberserker = '<
         }
         +p {
           なお、これはあくまで開発序盤の話です。
-          TypeScriptやNode.jsでは不足と感じたら、遠慮なく別言語を検討します。
-          例えば筆者の場合、RDBを導入すると決めたときは別言語に乗り換えるようにしています\footnote{昨今はprisma\cite(`prisma`);を使えばTypeScriptでも問題ないかもしれませんが、まだ未検証です……}。
+          TypeScriptやNode.jsでは不足と感じたら別言語を検討します。
+          例えば筆者の場合、RDBを導入すると決めたときは別言語に乗り換えるようにしています\footnote{昨今はprisma\cite(`prisma`);を使えばTypeScriptでも問題ないかもしれませんが、まだ未検証です}。
+          コンテナ技術の発達により、導入や移行がより容易になっているので、数年前に比べればさほど苦ではないように思います。
         }
       >
       +subsection{Web FrontendのFramework}<
         +p {
-          TODO: 個人の趣味。筆者はもっぱらNext.js。
+          FrontendのFrameworkは様々なものがあり、どれを使うかは個人の趣味によると思われます。
+          筆者は最近はもっぱらNext.jsを利用しています。
+        }
+        +listing {
+          * 環境構築時に必要なものがまとめて入る
+          * webpackを0から設定する必要がない
+          * TypeScriptフレンドリー
+        }
+        +p {
+          素のReactで1から環境構築しようとすると何かと大変ですが、最初からNext.jsを使えばルーティングやwebpackなどが一通り手に入るので大変重宝しています。
+          あとはなんといっても、TypeScriptでしっかり型チェックを行える点です。
+        }
+        +p {
+          余談ですが、プライベートな時間を使って本格的にWebアプリケーションを作り始めた2019年頃はNuxt.jsを使っていました。
+          当時は日本の各種サービスでNuxt.js導入の話を見聞きしていたことが主な理由ですが、
+          どうにもTypeScriptの恩恵が受けられない部分が多い感触があり、最近はあまり触れていません。
         }
       >
       +subsection{Firebase Authentication}<
         +p {
-          簡単に使えて便利ですが、\code(`onAuthStateChanged`);による認証取得に待たされるためユーザー体験的には微妙、という問題があります。
+          Firebaseではユーザー認証のため機能やツールとしてFirebase Authenticationが用意されています。
         }
         +p {
-          以降、筆者に利用経験のあるプロバイダーについて触れます。
+          簡単に使えて便利なFirebase Authenticationですが、\code(`onAuthStateChanged`);による認証取得に待たされるためユーザー体験的には微妙、という問題があります。
+          ネットワーク通信の関係上どうにもならないようので、適切にローディング処理を挿し込むか、Firebase Authenticationの利用を諦めましょう。
         }
-        +subsubsection{Googleアカウント}<
+        +p {
+          筆者が実際に試してみた認証プロバイダーはGoogle, Twitter, そしてメールリンク方式です。
+          Google Providerは本家なだけあって特にはまり所なく使えました。
+          Twitter Providerは謎のエラーに苦しめられることがあるため（そして解決策を見つけられなかったため）あまりお勧めはできません。
+        }
+        +p {
+          メールリンクも特に問題なく使えていますが、サインアップ時のメール文を変更できないといった難点があります。
+          こういった制限を許容できないサービスを作ろうとしているなら、別サービスを利用するか自作する他ないでしょう。
+        }
+        +subsubsection{メールリンク方式の再認証}<
           +p {
-            TODO: ちゃんと書く
+            メールリンク方式で筆者が嵌った点として、メールアドレス変更処理があります。
+            メールアドレス変更は再認証してからでないと行えないのですが、公式ドキュメントを読んだとおりに書いただけでは動かなかったのでした。
           }
-        >
-        +subsubsection{メールリンク}<
           +p {
-            公式ドキュメントが一部不親切なのではまり所があります。
+            次のコードは公式ドキュメントに記載されていたサンプルコード\cite(`re-authentication`);です。
+            \d-code(```
+              // Construct the email link credential from the current URL.
+              var credential = firebase.auth.EmailAuthProvider.credentialWithLink(
+                  email, window.location.href);
+              
+              // Link the credential to the current user.
+              firebase.auth().currentUser.linkWithCredential(credential)
+                .then(function(usercred) {
+                  // The provider is now successfully linked.
+                  // The phone user can now sign in with their phone number or email.
+                })
+                .catch(function(error) {
+                  // Some error occurred.
+                });
+            ```);
+            これを素直に取り入れるだけではエラーになって終わります。
+            なぜかというと……再認証していないからです（！？）。
           }
-        >
-        +subsubsection{Twitter}<
           +p {
-            TODO: 原因不明のエラーが発生することもあってあまりおすすめできない？
+            正しくは、email変更ページでサインイン処理を実行し、
+            メール文に記載されたリンクにアクセスしてリダイレクトされてから上記コードを呼び出す必要があります。
+            \d-code(```
+              // 変更前のemail
+              firebase.auth().sendSignInLinkToEmail(currentEmail, {
+                // サインイン処理後にemail変更ページのurlにリダイレクト
+                window.location.href,
+              });
+            ```);
+            このフローなら認証直後なのでエラーになることなくメール変更処理が行えます。
+            \d-code(```
+              await firebase.auth().currentUser?.updateEmail(newEmail);
+              await firebase.auth().currentUser?.sendEmailVerification({
+                // メール変更検証リンク
+                url,
+              });
+            ```);
           }
         >
       >
