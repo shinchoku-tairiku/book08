@@ -25,7 +25,8 @@ let-block +nomaddo = '<
       +p {
         Pytorch・KerasなどPythonのDLフレームワークを使う・Neural Network Consoleなどのビジュアルエディタを用いる・AutoMLなどの自動モデル構築サービスを使うなど
         深層学習モデルを記述する方法は色々ありますが、本質的な部分では
-        計算グラフというものは記述に用いるフレームワークに依存しないはずです。
+        計算グラフというものは記述に用いるフレームワークに依存しないはずです
+        \footnote{今後この希望はどんどん裏切られることになります。}。
       }
 
       +p {
@@ -54,8 +55,104 @@ let-block +nomaddo = '<
       }
 
       +p {
-        ONNXの実行環境として有力なものに
+        ONNXの実行環境として有力なものに以下のものがあります。
+        見事にMicrosoft開発なんですねこれが。
       }
+
+      +enumerate {
+        * ONNX Runtime \footnote {\url(`https://github.com/microsoft/onnxruntime`);}
+        * ONNX.js \footnote {\url(`https://github.com/microsoft/onnxjs`);}
+      }
+
+      +p {
+        すごく一般的な名前をしていますが特定企業の特定の実行環境の実装ですので
+        公式のONNXと分けて考えましょう。
+        これらはあとで使ってみます。特にONNX Runtime(以後onnxruntimeと書きます)はMicrosoftがちゃんとリソース割いて開発しているため
+        多くの場合パフォーマンスもよく \footnote{時々デグレってますのでフレームワークの推論の実行結果とonnxruntime の実行結果必ず確認したほうがいいですよ。}  、確認の上使っても大丈夫なくらいにはなっていると思います。
+      }
+    >
+
+    +section?:(`nomaddo:onnx_with_torch`){onnxruntimeとpytorch}<
+      +p {
+        最初にPytorchで書いたモデルからONNXフォーマットを出力する方法を確認しましょう。
+        Pytorchは公式の実装としてonnxモジュールがあり、外部ツールを用いずとも
+        onnxファイルを出力することができます。公式のチュートリアルもあるのですが
+        上長な記述が多いので削ったものを示します。
+      }
+
+
+    +code?:(`nomaddo:torch_onnx`) (```
+import torch
+import torchvision
+
+dummy_input = torch.randn(1, 3, 224, 224)
+model = torchvision.models.alexnet(pretrained=True)
+
+torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True)
+```){pretrained modelをonnx形式で保存する}
+
+    +p {
+      ポイントとしては、Pytorchのときはbatch sizeなど固定せずとも大丈夫だったパラメータを
+      固定する必要があり、そのためにダミーの入力を渡すようになっています。
+      \footnote{公式のチュートリアルではinput node, output nodeの名前を明示的に渡すようになっています。onnxruntimeをつかっていると必要がないのでここでは省いています}
+      \footnote{\url(`https://pytorch.org/docs/stable/onnx.html#example-end-to-end-alexnet-from-pytorch-to-onnx`);}
+    }
+
+    +p {
+      さて、ここでonnxファイルは手に入りました。実行するプログラムを見てみましょう
+      alexnetは入力画像の前処理が必要な上、PILから画像をロードするときはフォーマットの
+      変換が必要なため思ったよりも長いプログラムになっています。
+    }
+
+    +code?:(`nomaddo:make_onnx_alexnet`)(```
+import argparse
+import onnx
+import onnxruntime
+import numpy as np
+from PIL import Image
+
+def main(args):
+    # PILの画像フォーマットは HxWxCなのでCxHxWにtransposeする
+    img = np.array(Image.open(args.img), dtype=np.float32)
+    img = np.reshape(img, [1, 224, 224, 3]).transpose([0, 3, 1, 2]) / 255.0
+
+    # torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    # 相当の正規化を行う
+    mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+    for ch in range(3):
+        img[0, ch, :, :] = (img[0, ch, :, :] - mean[ch]) / std[ch]
+
+    # onnxruntimeを実行するコア部分、ココは覚えてね
+    onnx.checker.check_model(onnx.load(args.model))
+    sess = onnxruntime.InferenceSession(args.model)
+    inputs = {sess.get_inputs()[0].name: img}
+    outputs = [sess.get_outputs()[0].name]
+    r = sess.run(outputs, inputs)
+    print(r[0].reshape([1000]).argmax())
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='run alexnet')
+    parser.add_argument('--model', type=str, default='./alexnet.onnx')
+    parser.add_argument('img', type=str)
+    args = parser.parse_args()
+    main(args)
+    ```){alexnet.onnxを実行する}
+
+    +p {
+      ちょっと長いのでonnxruntimeの使い方を確認しておきましょう。
+    }
+
+    +p {
+      onnxファイルのパスからセッションを作成し、
+      \code(`sess.run`); でモデルの推論を実行するために必要な計算グラフの
+      入力ノード・出力ノードの名前を指定する必要があります。
+      入力ノードには名前とそのノードに渡されるデータをdictにして一緒に渡します。
+      これはグラフの入力ノードが複数ある場合・出力が複数ある場合にどれに渡す・
+      どれをどの順番に受け取るのか混乱を避けるために必要なデータです。
+      今回は1入力1出力のモデルですので、単純に\code(`sess`); に問い合わせて最初のものを
+      利用すれば十分です。
+    }
+
     >
   >
 >
