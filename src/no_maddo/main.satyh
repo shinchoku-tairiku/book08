@@ -156,24 +156,54 @@ if __name__ == '__main__':
         今回は1入力1出力のモデルですので、単純に\code(`sess`); に問い合わせて最初のものを
         利用すれば十分です。
       }
+
     >
 
-    +section?:(`nomaddo:download_onnx`){onnxをダウンロードして使う}<
-      +p {
-        onnxファイルをonnx model zooなどからダウンロードして使う場合はより簡単です。
-        と書きたいのですがそんなことはなくたくさんの落とし穴があります。
-      }
+    +section?:(`nomaddo:download_onnx`){onnxを扱うときの注意点}<
+      +subsection?:(`nomaddo:pytorch_attention_point`){onnxが生成できるか}<
+        +p {
+          onnxファイルを生成するときに注意すべき事として、すべてのオペレータのエキスポートに対応している
+          わけではないことがあります。例えばPytorchではmax_unpool2dはonnx出力に対応していません。
+          このような情報はドキュメントには筆者は見つけられておらず、必ずonnxを用いたワークロードでは
+          時間のかかる学習の前にエキスポートに対応しているか確認することが必要です。
+        }
+
+        +p {
+          Pytorchはまだましで、公式にonnxを生成する機能のないフレームワークを用いる場合はonnxが作成しているonnx出力ツール・
+          コミュニティの出力ツールを用いることになります。
+          これらの品質は本当にてんでバラバラで何も考えずに信頼できるものではありません。
+        }
+
+        +p {
+          例えば筆者はSonyが開発しているNeural Network Consoleにonnxエキスポート機能があるので試してみたことがあるのですが、
+          生成されたonnxファイルは規格違反の要素が含まれておりonnxruntimeがエラーを吐きました。
+          \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 治っているのか確認してはいません。}
+          私が試した時、この問題はResnetをエキスポートする中で発生しており、DLソフトウエアスタックを開発している身からしてこのような有力なモデルアーキテクチャ
+          でエラーが発生するということはonnxまわりの実行について何も確認をしていないのだなと受け取りました。
+          機能としては存在するけども対して実行確認されていない、という状態のソフトウエアは何も信頼できないと思っておいたほうが
+          業務では良いと思います。
+        }
+      >
 
       +subsection?:(`nomaddo:opset_version`){opset versionの存在}<
         +p {
           onnxにはopset versionという概念があり、onnx model zooにはonnxruntimeで実行できない
           ような古いバージョンのopset versionのonnxがあります。
+          onnxruntimeのopset versionの対応状況は一覧にまとまっています\footnote{\url(`https://github.com/microsoft/onnxruntime/blob/master/docs/OperatorKernels.md`);}。
         }
 
         +p {
           onnxのレポジトリにはバージョンコンバーターが提供されるのですが、
-          バージョンアップに対応していないオペレータも存在します
+          バージョンアップ自体にに対応していないオペレータも存在しますので万能の存在ではありません
           \footnote{\url(`https://github.com/onnx/onnx/tree/master/onnx/version_converter`);}。
+        }
+
+        +p {
+          今まではないと思いますが、onnxruntimeの状況によってはonnxの古いバージョンのサポートが
+          切られる可能性もなくはないと思うので、自分で作成していないonnxファイルの取扱いにはリスクがあります。
+          データは一度作成したら動かしたくないのに、バージョンアップでどんどん環境が変わっていくところがonnx、ひいては
+          深層学習モデルとの付き合いで難しいところです。
+          これはonnxだけではなく例えばtensorflowで書かれた古いモデルがだんだん実行できなくなっている、というのにも類似しています。
         }
       >
     >
