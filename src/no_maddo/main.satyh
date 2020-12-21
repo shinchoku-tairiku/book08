@@ -2,13 +2,12 @@
 
 let-block +nomaddo = '<
   +chapter{ONNX: Deep Learning 中間フォーマットという荒野}{もう疲れたよパトラッシュ}<
-
-  +p {
-      皆さんは機械学習してますか？ してますよね？
-      特に今イケているナウでヤングな皆さんは深層学習モデルを取り扱っているかと思います。
-      その中でONNX(オニキスと読む？)と呼ばれる深層学習モデルの計算グラフを扱うフォーマットについてつらつらと書いていきたいと思います。
-      あまり結論があるような話ではないですが楽しんでもらえればなによりです。
-    }
+    +p {
+        皆さんは機械学習してますか？ してますよね？
+        特に今イケているナウでヤングな皆さんは深層学習モデルを取り扱っているかと思います。
+        その中でONNX(オニキスと読む？)と呼ばれる深層学習モデルの計算グラフを扱うフォーマットについてつらつらと書いていきたいと思います。
+        あまり結論があるような話ではないですが楽しんでもらえればなによりです。
+      }
 
     +section?:(`nomaddo:what_is_ONNX`){ONNXとは？なぜ必要？}<
       +p {
@@ -70,6 +69,11 @@ let-block +nomaddo = '<
         これらはあとで使ってみます。特にONNX Runtime(以後onnxruntimeと書きます)はMicrosoftがちゃんとリソース割いて開発しているため
         多くの場合パフォーマンスもよく \footnote{時々デグレってますのでフレームワークの推論の実行結果とonnxruntime の実行結果必ず確認したほうがいいですよ。}  、確認の上使っても大丈夫なくらいにはなっていると思います。
       }
+
+      +p {
+        onnxruntimeはonnxの実行環境で、Python・C・Java・C\#・NodeJSなどのバインディングを持ちます。
+        OpenMP CPU実行・NVIDIA GPU実行・OpenVINO実行などのバックエンドを持ち、自分で高速化のことを考えなくていいので楽ちんです。
+      }
     >
 
     +section?:(`nomaddo:onnx_with_torch`){onnxruntimeとpytorch}<
@@ -80,8 +84,7 @@ let-block +nomaddo = '<
         上長な記述が多いので削ったものを示します。
       }
 
-
-    +code?:(`nomaddo:torch_onnx`) (```
+      +code?:(`nomaddo:torch_onnx`) (```
 import torch
 import torchvision
 
@@ -91,20 +94,20 @@ model = torchvision.models.alexnet(pretrained=True)
 torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True)
 ```){pretrained modelをonnx形式で保存する}
 
-    +p {
-      ポイントとしては、Pytorchのときはbatch sizeなど固定せずとも大丈夫だったパラメータを
-      固定する必要があり、そのためにダミーの入力を渡すようになっています。
-      \footnote{公式のチュートリアルではinput node, output nodeの名前を明示的に渡すようになっています。onnxruntimeをつかっていると必要がないのでここでは省いています}
-      \footnote{\url(`https://pytorch.org/docs/stable/onnx.html#example-end-to-end-alexnet-from-pytorch-to-onnx`);}
-    }
+      +p {
+        ポイントとしては、Pytorchのときはbatch sizeなど固定せずとも大丈夫だったパラメータを
+        固定する必要があり、そのためにダミーの入力を渡すようになっています。
+        \footnote{公式のチュートリアルではinput node, output nodeの名前を明示的に渡すようになっています。onnxruntimeをつかっていると必要がないのでここでは省いています}
+        \footnote{\url(`https://pytorch.org/docs/stable/onnx.html#example-end-to-end-alexnet-from-pytorch-to-onnx`);}
+      }
 
-    +p {
-      さて、ここでonnxファイルは手に入りました。実行するプログラムを見てみましょう
-      alexnetは入力画像の前処理が必要な上、PILから画像をロードするときはフォーマットの
-      変換が必要なため思ったよりも長いプログラムになっています。
-    }
+      +p {
+        さて、ここでonnxファイルは手に入りました。実行するプログラムを見てみましょう
+        alexnetは入力画像の前処理が必要な上、PILから画像をロードするときはフォーマットの
+        変換が必要なため思ったよりも長いプログラムになっています。
+      }
 
-    +code?:(`nomaddo:make_onnx_alexnet`)(```
+      +code?:(`nomaddo:make_onnx_alexnet`)(```
 import argparse
 import onnx
 import onnxruntime
@@ -118,6 +121,7 @@ def main(args):
 
     # torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     # 相当の正規化を行う
+    # https://pytorch.org/hub/pytorch_vision_alexnet/
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
     for ch in range(3):
         img[0, ch, :, :] = (img[0, ch, :, :] - mean[ch]) / std[ch]
@@ -136,23 +140,42 @@ if __name__ == '__main__':
     parser.add_argument('img', type=str)
     args = parser.parse_args()
     main(args)
-    ```){alexnet.onnxを実行する}
+      ```){alexnet.onnxを実行する}
 
-    +p {
-      ちょっと長いのでonnxruntimeの使い方を確認しておきましょう。
-    }
+      +p {
+        ちょっと長いのでonnxruntimeの使い方を確認しておきましょう。
+      }
 
-    +p {
-      onnxファイルのパスからセッションを作成し、
-      \code(`sess.run`); でモデルの推論を実行するために必要な計算グラフの
-      入力ノード・出力ノードの名前を指定する必要があります。
-      入力ノードには名前とそのノードに渡されるデータをdictにして一緒に渡します。
-      これはグラフの入力ノードが複数ある場合・出力が複数ある場合にどれに渡す・
-      どれをどの順番に受け取るのか混乱を避けるために必要なデータです。
-      今回は1入力1出力のモデルですので、単純に\code(`sess`); に問い合わせて最初のものを
-      利用すれば十分です。
-    }
+      +p {
+        onnxファイルのパスからセッションを作成し、
+        \code(`sess.run`); でモデルの推論を実行するために必要な計算グラフの
+        入力ノード・出力ノードの名前を指定する必要があります。
+        入力ノードには名前とそのノードに渡されるデータをdictにして一緒に渡します。
+        これはグラフの入力ノードが複数ある場合・出力が複数ある場合にどれに渡す・
+        どれをどの順番に受け取るのか混乱を避けるために必要なデータです。
+        今回は1入力1出力のモデルですので、単純に\code(`sess`); に問い合わせて最初のものを
+        利用すれば十分です。
+      }
+    >
 
+    +section?:(`nomaddo:download_onnx`){onnxをダウンロードして使う}<
+      +p {
+        onnxファイルをonnx model zooなどからダウンロードして使う場合はより簡単です。
+        と書きたいのですがそんなことはなくたくさんの落とし穴があります。
+      }
+
+      +subsection?:(`nomaddo:opset_version`){opset versionの存在}<
+        +p {
+          onnxにはopset versionという概念があり、onnx model zooにはonnxruntimeで実行できない
+          ような古いバージョンのopset versionのonnxがあります。
+        }
+
+        +p {
+          onnxのレポジトリにはバージョンコンバーターが提供されるのですが、
+          バージョンアップに対応していないオペレータも存在します
+          \footnote{\url(`https://github.com/onnx/onnx/tree/master/onnx/version_converter`);}。
+        }
+      >
     >
   >
 >
