@@ -222,22 +222,45 @@ let-block +pocketberserker = '<
           とはいえ、Node.js 10以降はそれ以前に比べると機能も充実してきたため、あまり問題にならない可能性もありです。
         }
       >
-      +subsection{Cloud Storage}<
+      +subsection{Cloud Storage for Firebase}<
         +p {
-          TODO: ちゃんと書く
+          FirebaseではFirebase SDKを用いてファイルを簡単にGoogle Cloud Storage（GCS）へアップロード、ダウンロードできます。
+          アップロードしたファイルは他のGoogle Cloudサービスからも利用可能です。
+        }
+        +P {
+          Cloud StorageもFirestoreと同様、セキュリティルールを記述することでクライアントからアップロード、ダウンロードが可能になります。
+          ただ、リクエストを検証しアクセス権の有無を確認しているためか、ダウンロードはGCSの公開URLから直接取得するよりも時間がかかるようです。
+          そのため、公開可能な画像についてはCloud Functions等と連携してGCSの公開URLを用いたほうがいいかもしれません。
+          あるいはCDNを導入のも一手でしょう。
+        }
+      >
+      +subsection{その他}<
+        +p {
+          Firebaseには他にも様々な機能があるので、気になる人はぜひドキュメントを眺めてください。
+          Mechine Learningとかも用意されていてなかなか読み応えがあります。
+        }
+        +p {
+          前述した以外に筆者が活用しているものとしてはGoogle AnalyticsとFirebase Performance Monitoringがあります。
+          Google Analyticsは基本的に有効にしています。
+          Performance Monitoringは他の手段で代用できるため、たまに使うことがあるくらいです。
         }
       >
     >
     +section{FirebaseとGCP}<
+      +p {
+        FirebaseはGCP上に構築されています。
+        そのため、別途GCPプロジェクトを用意せずともGCPの各種サービスを利用できます。
+        中にはFirebaseの機能と被っているものもあるので、本項では筆者のサービスの使い分けを紹介します。
+      }
       +subsection{Functions? GAE? Cloud Run?}<
         +p {
           筆者はだいたい次のように使い分けています。
         }
         +listing {
-          * Firestoreのトリガー: Cloud Functions for Firebase
-          * Cloud Storageのトリガー: Cloud Functions for Firebase
-          * 簡単なスケジューラー: Cloud Functions for Firebase
-          * 簡単なPubSub: Cloud Functions for Firebase
+          * Firestoreのトリガーを使いたい: Cloud Functions for Firebase
+          * Cloud Storageのトリガーを使いたい: Cloud Functions for Firebase
+          * 手軽にスケジューラーを用意したい: Cloud Functions for Firebase
+          * 手軽にPubSubを利用したい: Cloud Functions for Firebase
           * Web UI用の簡素なAPI: Cloud Functions for Firebase
           * Web UI用のAPI: GAE
           * 重量級の依存ライブラリ: Cloud Run
@@ -252,6 +275,12 @@ let-block +pocketberserker = '<
           Node.jsではプロセス起動時にモジュール読み込みが発生するため、実装次第ではこの問題がより顕著になります。
           最適化するプラクティスが存在するとはいえ\footnote{Cloud Runで応答時間を最適化する方法は公式の記事\cite(`optimize-cloud-run-response-time`);があります}、0にできるものではありません。
           Webサービスを実装するうえで、cold startによる応答遅延はユーザー体験の悪化につながるので、気になるようなら他の道具（GAE, GKE）を検討しましょう\footnote{スモールスタートにするならGAE一択だと思います}。
+        }
+        +p {
+          余談ですが、GKEを持ち出すのはよほどの規模感になったときかな、と考えています。
+          以前はCloud ArmorによるDDos対策を考えるとGKEを視野に入れるべきかなと考えていましたが、
+          Serverless NEGの登場によってCloud FunctionsやCloud RunもCloud Armorと連携させることが可能となったため、
+          個人開発でGKEを導入する理由にはならなくなったのではないかなと。
         }
       >
       +subsection{Firestore? Cloud SQL?}<
