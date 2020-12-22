@@ -23,12 +23,11 @@ let-block +pocketberserker = '<
       +subsection{Firebase Hosting}<
         +p {
           FirebaseでWebページをホスティングする場合はFirebase Hostingを利用することがほとんどでしょう。
-          Firebase HostingはCloud FunctionsやCloud Runと組み合わせることで、動的コンテンツを生成して配信できるからです。
+          Firebase HostingはCloud FunctionsやCloud Runと組み合わせることで、動的コンテンツを生成して配信できる強みがあります。
         }
         +p {
-          ホスティング機能のみが必要なときには、Firebase Hostingは他サービスに比べると見劣りする部分があるかもしれません。
-          また、癖が強いように感じる部分もあるでしょう。
-          そういったときはFirebaseにこだわらず別サービスを利用しましょう。
+          逆をいえば、ホスティング機能のみが必要なときにFirebase Hostingを利用する理由はあまりないと感じています。
+          特にNext.jsを採用する場合はVercel\cite(`vercel`);のほうが良い選択肢かもしれません。
         }
       >
       +subsection{TypeScript}<
