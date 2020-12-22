@@ -334,7 +334,7 @@ let-block +pocketberserker = '<
         +p {
           筆者が利用経験を持つCDNサービスはCloudinaryとImgixです。
           CloudinaryはそこそこわかりやすいAPIで無料枠があるためちょっとしたサービスに使いやすい印象をもっています。
-          Imgixは従量課金で毎月最低限の料金が発生しますが、GCSやS3との連携が用意でした。
+          Imgixは従量課金で毎月最低限の料金が発生しますが、GCSやS3との連携が容易でした。
         }
       >
     >
