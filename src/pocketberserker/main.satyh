@@ -13,7 +13,7 @@ let-block +pocketberserker = '<
     >
     +section{FirebaseとTypeScriptによるWebサービス開発}<
       +p {
-        Firebase\cite(`fierbase`);はGoogleが提供するmBaaSです。
+        Firebase\cite(`firebase`);はGoogleが提供するmBaaSです。
         モバイルのBackendに利用されるほか、Webサービスのバックエンドとして利用されることもあります。
       }
       +p {
