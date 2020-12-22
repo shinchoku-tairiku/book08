@@ -228,7 +228,7 @@ let-block +pocketberserker = '<
           FirebaseではFirebase SDKを用いてファイルを簡単にGoogle Cloud Storage（GCS）へアップロード、ダウンロードできます。
           アップロードしたファイルは他のGoogle Cloudサービスからも利用可能です。
         }
-        +P {
+        +p {
           Cloud StorageもFirestoreと同様、セキュリティルールを記述することでクライアントからアップロード、ダウンロードが可能になります。
           ただ、リクエストを検証しアクセス権の有無を確認しているためか、ダウンロードはGCSの公開URLから直接取得するよりも時間がかかるようです。
           そのため、公開可能な画像についてはCloud Functions等と連携してGCSの公開URLを用いたほうがいいかもしれません。
