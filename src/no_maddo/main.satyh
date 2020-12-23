@@ -1,7 +1,7 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
 
 let-block +nomaddo = '<
-  +chapter{ONNX: Deep Learning 中間フォーマットという荒野}{もう疲れたよパトラッシュ}<
+  +chapter{ONNX: DL中間フォーマットという荒野}{もう疲れたよパトラッシュ}<
     +p {
         皆さんは機械学習してますか？ してますよね？
         特に今イケているナウでヤングな皆さんは深層学習モデルを取り扱っているかと思います。
@@ -11,7 +11,7 @@ let-block +nomaddo = '<
 
     +section?:(`nomaddo:what_is_ONNX`){ONNXとは？なぜ必要？}<
       +p {
-       Open Neural Network Exchange (以後ONNXと書きます) とは主にMicrosoftが主導して
+       Open Neural Network Exchange \footnote{\url(`https://onnx.ai`);} (以後ONNXと書きます) とは主にMicrosoftが主導して
        \footnote{実際はパートナー企業が他にもいるけど積極的なのはMicrosoftです。後述のONNXRUNTIMEやONNX.jsなどを開発しています。彼らのクラウドサービスで扱うための中間フォーマットとして使うためですね。} 開発している深層学習モデルの中間フォーマットです。
       }
 
@@ -179,7 +179,7 @@ if __name__ == '__main__':
           生成されたonnxファイルは規格違反の要素が含まれておりonnxruntimeがエラーを吐きました。
           \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 治っているのか確認してはいません。}
           私が試した時、この問題はResnetをエキスポートする中で発生しており、DLソフトウエアスタックを開発している身からしてこのような有力なモデルアーキテクチャ
-          でエラーが発生するということはonnxまわりの実行について何も確認をしていないのだなと受け取りました。
+          でエラーが発生するということはonnxまわりの出力結果について何も確認をしていないのだなと受け取りました。
           機能としては存在するけども対して実行確認されていない、という状態のソフトウエアは何も信頼できないと思っておいたほうが
           業務では良いと思います。
         }
@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
         +p {
           onnxのレポジトリにはバージョンコンバーターが提供されるのですが、
-          バージョンアップ自体にに対応していないオペレータも存在しますので万能の存在ではありません
+          バージョンアップ自体に対応していないオペレータも存在しますので万能の存在ではありません
           \footnote{\url(`https://github.com/onnx/onnx/tree/master/onnx/version_converter`);}。
         }
 
@@ -206,6 +206,65 @@ if __name__ == '__main__':
           これはonnxだけではなく例えばtensorflowで書かれた古いモデルがだんだん実行できなくなっている、というのにも類似しています。
         }
       >
+    >
+
+    +section?:(`nomaddo:for_onnx`){onnx所感}<
+      +p {
+        onnx自体ツラミの塊みたいなフォーマットです。
+        これは単にonnxをつかうだけのひとには関係がないことですが、面白いポイントだと思うのでまとめておきます。
+      }
+
+      +subsection?:(`nomaddo:onnx_intersection`){この世すべての悪の集合体}<
+        +p {
+          各DLフレームワークは互いのコンセンサスを取ることなくバラバラに開発されています。
+          そのため各オペレータの演算の細かい挙動などことなるような実装が行われています。
+          onnxはそれらの単なるいち"実装"を再現できるための"仕様"を含んでいます。
+        }
+
+        +p {
+          例えばPaddingは画像に特定の値のピクセルを追加する処理ですが、
+          tensorflowはバージョンごとに挙動が異なり、
+          \footnote{ほんまキレそう。}、Pytorch・Chainerは追加しようとしている軸の
+          両側にピクセルを追加します。
+          そのため多くのonnxのオペレータの\code(`auto_pad`); 属性にはそれらをすべて表現するために \code(`NOTSET`);, \code(`SAME_UPPER`); , \code(`SAME_LOWER`);, \code(`VALID`); の値を取るようにできています。
+          DLフレームワークの実装が進めば進むほど負の遺産がonnxの仕様に集まってくるという特性があります。
+        }
+
+        +p {
+          もちろんこれは単に使う人には関係がありませんが、
+          onnxを利用したソフトウエアを開発する人には細々とした仕様全てに対応を強いられます。
+        }
+      >
+      +subsection?:(`nomaddo:onnx_convension_violation`){onnxの仕様が守られない}<
+        +p {
+          onnxには一応仕様がありますが、守られない仕様があります。
+          例えばonnxのグラフのノードの名前はC Identifierであることが
+          定められていますが、多くの実装でPythonのオブジェクトのIDを
+          そのまま名前に使いまわそうとしてこの名前の規格を起こしています。
+          ONNX model zooですらこの規格違反のあるonnxを公開していました
+          \footnote{\url(`https://github.com/onnx/models/issues/147`); }。
+        }
+
+        +p {
+          Pytorchの実装はだいぶ前にグラフの名前がC identifierになっておらず、
+          同僚が規格違反をIssueで連絡しているのですが\footnote{\url(`https://github.com/pytorch/pytorch/issues/30952`); }、
+          規格がなぜあるのか説いています。
+        }
+
+        +p {
+          関わる人間が規格に対する意識が低く、規格が持つ制約を意識して実装しているか
+          疑問符がつく状況です。
+          実装が先行する世界ではよくあることですが、
+          規格だけではなく世の中の実装がどうなっているのか確認していく必要があります。
+        }
+      >
+    >
+    +section?:(`nomaddo:owarini`){あとがき}<
+      +p {
+        進捗大陸らしく自分の進捗について書きたかったのですが、
+        この技術書典の開催ペースについていけず初めてやる強化学習の実装が全然うまくいかず、
+        仕事でやった話を書くことにしました。ちょっと残念です。
+      }
     >
   >
 >
