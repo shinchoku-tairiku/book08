@@ -33,6 +33,14 @@ let bib-items =
       year = None;
       month = None;
     |));
+    (`react-hooks-rules`, BibMisc
+    (|
+      title = Some {フックのルール};
+      author = None;
+      howpublished = Some {\url(`https://ja.reactjs.org/docs/hooks-overview.html#rules-of-hooks`);};
+      year = None;
+      month = None;
+    |));
     (`re-authentication`, BibMisc
     (|
       title = Some {メールリンクのリンクと再認証};

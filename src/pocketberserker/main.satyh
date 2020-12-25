@@ -71,7 +71,15 @@ let-block +pocketberserker = '<
           あとはなんといっても、TypeScriptでしっかり型チェックを行える点です。
         }
         +p {
-          余談ですが、プライベートな時間を使って本格的にWebアプリケーションを作り始めた2019年頃はNuxt.jsを使っていました。
+          Next.jsとFirebaseを組み合わせる際に考慮すべきこととして、Firebase向けのReact Hooksライブラリを使用するかどうかという話があります。
+          React Hooksは関数のトップレベルで呼び出す必要がある\cite(`react-hooks-rules`);ので、
+          Firebase向けに作られたReact Hooksライブラリを使用するとUIとFirebaseが密結合することになります。
+          ローカルで開発する際はモックにしておきたい思考とは相反することになるので、こういったライブラリは利用できません。
+          Firebase Emulatorを利用して開発する人は使っても問題ないかもしれません\footnote{筆者は試したことないので断言できず}。
+          筆者は依存を少なくしておきたいので、基本的に前者の方針を取ることにしています。
+        }
+        +p {
+          なお余談ですが、プライベートな時間を使って本格的にWebアプリケーションを作り始めた2019年頃はNuxt.jsを使っていました。
           当時は日本の各種サービスでNuxt.js導入の話を見聞きしていたことが主な理由ですが、
           どうにもTypeScriptの恩恵が受けられない部分が多い感触があり、
           複雑なものを作るとビルドに時間がかかる事がある（個人の主観です）と感じたため、最近はあまり触れていません。
@@ -84,6 +92,52 @@ let-block +pocketberserker = '<
         +p {
           簡単に使えて便利なFirebase Authenticationですが、\code(`onAuthStateChanged`);による認証取得に待たされるためユーザー体験的には微妙、という問題があります。
           ネットワーク通信の関係上どうにもならないようので、適切にローディング処理を挿し込むか、Firebase Authenticationの利用を諦めましょう。
+          筆者の場合、Next.jsを使うときは次のようなhookを書いて使うようにしています。
+          \d-code(```
+            import React, { createContext, useState, useEffect } from "react";
+            import { UserAccount } from "../domain";
+            import { AccountService } from "../service";
+
+            // UserAccountはuidやnameといったユーザー情報を持つ型
+            // AuthContextを利用する際にFirebaseと密結合させないようdomainで定義した型を使う
+            export type UserAccountState = {
+              user: UserAccount | null;
+              loading: boolean;
+            };
+            export const AuthContext = createContext<UserAccountState>({
+              user: null,
+              loading: true,
+            });
+            
+            type Props = {
+              children: React.ReactNode;
+              // AccountServiceはinterface
+              accountService: AccountService;
+            };
+            
+            export const AuthProvider: React.FC<Props> = ({ accountService, children }) => {
+              const [account, setAccount] = useState<UserAccountState>({
+                user: null,
+                loading: true,
+              });
+              const [subscribed, setSubscribed] = useState(false);
+            
+              useEffect(() => {
+                return accountService.onStateChanged((user) => {
+                  setAccount({
+                    user,
+                    loading: false,
+                  });
+                });
+              }, []);
+            
+              // ここに追加で必要なEffectを書く
+            
+              return (
+                <AuthContext.Provider value={account}>{children}</AuthContext.Provider>
+              );
+            };
+          ```);
         }
         +p {
           筆者が実際に試してみた認証プロバイダーはGoogle, Twitter, そしてメールリンク方式です。
@@ -354,8 +408,15 @@ let-block +pocketberserker = '<
     >
     +section{おわりに}<
       +p {
-        文字数のわりにあまり内容がない感じになってしまいました……力量不足を痛感します。
-        もっと精進せねばと思いつつ、もう少し開催間隔をあけてほしいなと思わなくもない……？
+        文字数のわりにあまり内容がない感じになってしまいました、力量不足を痛感します。
+        もう少し技術書典の開催間隔が長ければ……いや、もっと精進せねば。
+      }
+      +p {
+        ここ1, 2年はプロダクト開発に時間を割いてみています。
+        最低限全部ひとりでできるようになっておいたほうが幅が広がりそうだなと思って始めましたが、
+        最近はこれ作ってみたらどういう感じになるのだろう、
+        という意識から実装をはじめてみることも増えてきました。
+        作ってみたいものが自分にもあったのだなと驚いています。
       }
     >
   >
