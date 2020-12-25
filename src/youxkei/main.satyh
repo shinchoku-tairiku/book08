@@ -1,6 +1,255 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
 
-let-block +youxkei = '<
-  +chapter{youxkei担当章}{謎の名言絶対にいる}<
-  >
->
+module Youxkei : sig
+    direct +youxkei : [] block-cmd
+end = struct
+    let-inline \dfn word = {\emph{#word;}}
+
+    let-inline \ref label = {\ref(`youxkei:` ^ label);}
+    let-inline \figref label = {図\ref(`figure:` ^ label);}
+    let-inline \coderef label = {コード\ref(`code:` ^ label);}
+
+    let-block +figure label size caption = '<
+        +figure?:(`youxkei:figure:` ^ label)?:(size)(`youxkei/` ^ label ^ `.pdf`){#caption;}
+    >
+
+    let-block +code label code caption = '<
+        +code?:(`youxkei:code:` ^ label)(code){#caption;}
+    >
+
+    let-block +youxkei = '<
+      +chapter{QRコード魔法陣をスマホで読み取る}{ここに入れる気の利いた名言が思いつかなかったので募集します！良い名言を思いついた方がいたら\url(`https://github.com/shinchoku-tairiku/book08`);までPRをお願いします！ - \@youxkei}<
+          +section{はじめに}<
+              +p{
+                  こんにちは。\@youxkeiです。
+                  今回も、QRコードっぽい魔法陣を作る話をしていきます。
+              }
+              +p{
+                  魔法陣を自動生成したいと思ったこと、あると思います。さらに、どうせなら情報が埋め込まれた魔法陣を生成したいですよね！
+              }
+              +p{
+                  ということで前回の進捗大陸07では、情報が埋め込まれた魔法陣である\dfn{MCコード}を作成し、さらにMCコードの画像から情報を読み取るプログラムを作成しました。
+                  残念なことに、この読み取りプログラムはPC上でしか動作しません。
+              }
+              +p{
+                  MCコードはQRコードのような魔法陣だ！と主張しているので、ここはやはりMCコードもQRコードのようにスマホで読み取れると良さそうです。
+                  ということでこの章では、MCコードをスマホで読み取れるようにしていきます。
+              }
+              +p{
+                  前回作成したMCコード生成機である
+                  MC Code Generator\footnote{\url(`https://youxkei.github.io/mccode_generator/`);}
+                  で作成したMCコードは、今回作成したスマホ上で動くMCコード読み取り機である
+                  MC Code Scanner\footnote{\url(`https://youxkei.github.io/mccode_scanner/`);}
+                  で読み取ることが出来ます。
+              }
+          >
+          +section{MCコード}<
+              +p{本題に入る前に、前回作成したMCコードがどのようなものであったかをおさらいします。}
+              +p{MCコードは「魔法陣はグラフに見える」という発想から生まれました。}
+              +p{
+                  グラフに情報を埋め込み、そのグラフを魔法陣っぽく配置することでMCコードを生成できます。
+                  MCコードを読み込む際はMCコードをグラフとして処理すればいいので、比較的に読み取りを行うことが出来ます。
+              }
+              +p{\figref(`mccode_hello`);は、MC Code Generatorで生成した\code(`Hello, world!`);という文字列を埋め込んだMCコードです}
+              +p{MCコードの詳しい構成方法については、進捗大陸07を参照してください。}
+              +figure(`mccode_hello`)(6cm){\code(`Hello, world!`);という文字列を埋め込んだMCコード}
+          >
+
+          +section{スマホで読み取る}<
+              +p{スマホで動作するMCコード読み取り機を作ろうと思うと、いくつか方法があると思います。}
+              +p{今回は、ブラウザ上で動作するMCコード読み取り機を作っていきます。}
+              +p{
+                  実は、進捗大陸07ではMCコード読み取り機を将来ブラウザで動かすことを考えて、Rustで書きました。
+                  今回がまさにその時ってことですね！
+              }
+              +subsection{RustをWebAssemblyにコンパイル}<
+                  +p{
+                      Rustは比較的簡単にWebAssemblyにコンパイルできることが知られています。
+                      今回は、wasm-bindgenでJavaScriptと連携しつつ、wasm-packを使ってRustをWebAssemblyにコンパイルします。
+                  }
+              >
+              +subsection{JavaScriptでカメラの映像を取得}<
+                  +p{
+                      \code(`MediaDevices.getUserMedia`);\footnote{\url(`https://developer.mozilla.org/ja/docs/Web/API/MediaDevices/getUserMedia`);}でカメラ映像ストリームを取得することができます。
+                      \footnote{
+                          開発中、普段使用しているPixel3 XLで動作確認をしようとした所、なぜか\code(`getUserMedia`);で映像ストリームが取得できない、という問題が発生しました。
+                          色々と試したのですが、最終的に端末の再起動によって直りました。
+                      }
+                  }
+                  +code(`getUserMedia`)(```
+                      const scanWidth = 360;
+                      const constraint = {
+                        video: {
+                          facingMode: { exact: "environment" },
+                          width: { exact: (scanWidth * 8) / 3 },
+                          height: { exact: scanWidth * 2 },
+                        },
+                        audio: false,
+                      };
+
+                      const stream = await navigator.mediaDevices.getUserMedia(constraint);
+                  ```){\code(`getUserMedia`);でカメラ映像を取得}
+                  +p{
+                      \code(`scanWidth`);は読み取る正方形領域の一辺の長さです。
+                      この\code(`scanWidth`);を大きくすることでより細かいMCコードを読み取ることができるようになりますが、
+                      一方で処理速度が遅くなる、というトレードオフがあります。
+                      色々と試した結果、今回は一辺が360pxの正方形領域を読み取ることにします。
+                  }
+                  +p{
+                      \code(`constraint`);で取得する映像ストリームの性質を指定することが出来ます。
+                      \code(`width`);と\code(`height`);は\code(`scanWidth`);から計算することにしました。
+                      \code(`height`);を\code(`scanWidth`);の2倍にして、アスペクト比が4:3になるように\code(`width`);を設定しています。
+                      \code(`faicingMode`);に\code(`"environment"`);を指定することで、スマホの背面カメラを指定することができます。
+                  }
+                  +p{音声は要らないので取得しないようにします。}
+                  +p{
+                      さて、映像が取得できたので、次はRustが受け取れるように配列に変換します。
+                      映像ストリームを\code(`video`);要素で再生し、
+                      \code(`CanvasRenderingContext2D.drawImage`);でその\code(`video`);要素を描画し、
+                      その後に\code(`CanvasRenderingContext2D.getImageData`);を呼ぶことで、
+                      映像ストリームの\code(`drawImage`);した瞬間の画像の配列を取得することが出来ます。
+                  }
+                  +code(`getImageData`)(```
+                      const video = document.getElementById("video");
+                      video.srcObject = stream;
+                      video.play();
+
+                      context.drawImage(video, 0, 0);
+                      const image = context.getImageData(
+                        (width - scanWidth) / 2,
+                        (height - scanWidth) / 2,
+                        scanWidth,
+                        scanWidth
+                      ).data;
+                  ```){\code(`CanvasRenderingContext2D.getImageData`);で画像配列を取得}
+                  +p{\code(`video`);要素は画面に映ると困るので、あらかじめ属性に\code(`hidden`);を設定しておきました。}
+                  +p{
+                      \code(`getImageData`);の際、一辺が\code(`scanWidth`);の正方形領域のみを取得しています。
+                      こうすることで、MCコードを大きく読み取ることが簡単になります。
+                  }
+                  +p{
+                      取得した配列は\code(`Uint8ClampedArray`);型で、RGBAの順番でピクセルの色情報が格納されています
+                      \footnote{\url(`https://developer.mozilla.org/en-US/docs/Web/API/ImageData/data`);}。
+                      Rust側でこの配列を画像に戻す際にこの情報が重要になります。
+                  }
+              >
+              +subsection{Rustで画像を受け取り処理する}<
+                  +p{wasm-bindgenの力によって、JavaScriptの\code(`Uint8ClampedArray`);の値を\code(`Clamped<Vec<u8>>`);としてRustで受け取ることができます。}
+                  +code(`scan`)(```
+                    #[wasm_bindgen]
+                    pub fn scan(width: u32, height: u32, pixels: Clamped<Vec<u8>>) -> Option<String> {
+                        scanner::scan(
+                            DynamicImage::ImageRgba8(
+                                RgbaImage::from_raw(width, height, pixels.to_vec()).unwrap()
+                            ),
+                            false,
+                        )
+                        .ok()
+                    }
+                  ```){JavaScriptから受け取った配列をRustで画像に変換}
+                  +p{
+                      imageクレートの画像データに変換します。
+                      \code(`RgbaImage::from_raw`);で\code(`ImageBuffer`);に変換して
+                      \code(`DynamicImage::ImageRgba8`);でラップして\code(`DynamicImage`);にします。
+                  }
+                  +p{
+                      \code(`DynamicImage`);にした画像を前回作ったMCコード読み取り関数\code(`scanner:scan`);に渡します。
+                  }
+                  +p{
+                      JavaScriptへは\code(`Option<String>`);で結果を返します。
+                      成功した場合に読み取った文字列を、失敗した場合は\code(`None`);を返すようにします。
+                  }
+                  +p{
+                      本当はResultで結果を返したかったのですが、wasm-bindgenのバグによってメモリリークが発生してしまう
+                      \footnote{\url(`https://github.com/rustwasm/wasm-bindgen/issues/1963`);}ので、
+                      今回はResultの代わりにOptionを使うことにしました。
+                  }
+              >
+              +subsection{工夫}<
+                  +p{
+                      開発していて、前面ピクセル（頂点や辺のピクセル）が多いと、
+                      細線化にかなり時間がかかることに気づきました。
+                  }
+                  +p{
+                      \figref(`mccode_binary`);のMCコードを見てみると、背景のピクセルよりも頂点や辺のピクセルのほうが比較的少ないことが分かります。
+                  }
+                  +figure(`mccode_binary`)(6cm){MCコードを二値化した画像}
+                  +p{
+                      今回の一辺360pxの解像度でぎりぎり読み取れる大きさのMCコードの前面ピクセルの割合を調べてみた所、32％くらいでした。
+                      そこで、前面ピクセルの割合が35％以上である場合に読み込みを失敗させることにしました。
+                      前面ピクセルの割合が高い場合、つまり元々の映像ストリームの画像が黒すぎる場合は、そもそもカメラがMCコードを映していないと判断する、ということです。
+                  }
+                  +code(`foreground_check`)(```
+                      let hist = histogram(image).channels[0];
+                      let num_foreground_pixels = hist[FOREGROUND_PIXEL as usize];
+                      let num_pixels = num_foreground_pixels + hist[BACKGROUND_PIXEL as usize];
+
+                      // num_foreground_pixels / num_pixels <= MAX_FOREGROUND_PERCENTAGE / 100
+                      if num_foreground_pixels * 100 <= MAX_FOREGROUND_PERCENTAGE * num_pixels {
+                          Ok(())
+                      } else {
+                          Err(format!(
+                             "foregroud percentage is too high. percentage: {:.2}, required: percentage <= {}",
+                             num_foreground_pixels as f64 / num_pixels as f64 * 100.0,
+                             MAX_FOREGROUND_PERCENTAGE
+                          ))
+                      }
+                  ```){前面ピクセルの割合をチェック}
+                  +p{
+                      \figref(`foreground_check`);では、二値画像のヒストグラムを計算し、前面ピクセル割合が高すぎた場合に失敗するようになっています。
+                  }
+              >
+          >
+
+          +section{まとめ}<
+              +p{
+                  スマホ上で動作するMCコード読み取り機である
+                  MC Code Scanner\footnote{\url(`https://youxkei.github.io/mccode_scanner/`);}
+                  を作ることが出来ました。
+                  進捗大陸07で作成した
+                  MC Code Generator\footnote{\url(`https://youxkei.github.io/mccode_generator/`);}
+                  を使って作成したMCコードは、MC Code Scannerで読み取ることが出来ます\footnote{ただし、大きすぎるMCコードを読み取ることができません・・・}。
+              }
+          >
+
+          +section{今後の課題}<
+              +p{今後の課題をいくつか挙げていきます。}
+              +p{
+                  MCコードはあんまり魔法陣っぽくないことに気付いてしまった方も多くいると思います。
+                  どうしたらより魔法陣っぽくなるのかを\@yutoppに相談してみたことがあるのですが
+                  「五芒星や六芒星などのモチーフを導入するのはどうか」という意見をもらいました。
+                  モチーフを導入するなど、より魔法陣っぽい形を目指していきたいです。
+                  より魔法陣っぽいMCコードの構成を思いついた方がいたらMC Code GeneratorのIssueページ\footnote{\url(`https://github.com/youxkei/mccode_generator/issues`);}までお願いします！
+              }
+              +p{
+                  現在のMCコードは、情報を詰め込むと簡単に大きくなってしまうという問題を持っています。
+                  今回作ったMC Code ScannerはMCコードが大きすぎると読み取りができなくなってしまいます。
+                  なんとか情報の密度を上げていきたいです。
+              }
+              +p{
+                  MC Code Scannerでは、\code(`canvas`);要素に映像ストリームを描画するループの中で
+                  MCコード読み取りを行っているため、読み取りに時間がかかるとスマホの画面上に表示されている映像の
+                  FPSが下がってしまいます。
+                  MCコード読み取りをService Workerで行うようにするとその問題が解決しそうなので、いつかチャレンジしてみたいです。
+              }
+          >
+
+          +section{あとがき}<
+              +p{
+                  可能なことは知っていたのですが、実際にやってみるとRustのコードが本当にブラウザで動いてびっくりしました。
+                  WebAssemblyすごい。
+              }
+              +p{
+                  今回もMC Code Scannerのために簡単なWeb UIを作ったのですがCSSグリッドレイアウトによる配置が良すぎる・・・
+                  今までのCSSでの無理矢理感あふれる配置テクニックは一体何だったんだ、という感想をいだきました。
+              }
+              +p{
+                  進捗大陸もついに最終巻です。
+                  最終巻と聞いて、何とか進捗と日本語をひねり出してこの章を書くことができました。
+                  本のシリーズとしての進捗大陸は最終巻ですが、サークルとしての進捗大陸の活動はこれからも続いていくと思いますので、
+                  見かけたらちらっと覗いてみてください。
+              }
+          >
+      >
+    >
+end
