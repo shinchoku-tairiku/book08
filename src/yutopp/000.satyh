@@ -33,6 +33,7 @@ let-block +hajime = '<
 +listing {
   * Windows 10 20H2 (またはArch Linux)
   * Unity 2020.1.16f1以降
+    ** Universal Render Pipeline 8.3
   * (あると嬉しい) Unityで読み込むことのできる、お好きな3Dモデル
 }
 
