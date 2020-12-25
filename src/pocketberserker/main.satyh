@@ -178,7 +178,7 @@ let-block +pocketberserker = '<
           }
           +p {
             正しくは、email変更ページでサインイン処理を実行し、
-            メール文に記載されたリンクにアクセスしてリダイレクトされてから上記コードを呼び出す必要があります。
+            メール文に記載されたリンクにアクセスしてリダイレクトされてから前述のコードを呼び出す必要があります。
             \d-code(```
               // 変更前のemail
               firebase.auth().sendSignInLinkToEmail(currentEmail, {
