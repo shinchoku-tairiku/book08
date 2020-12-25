@@ -2,7 +2,7 @@
 @import: local
 
 let-block +pocketberserker = '<
-  +chapter?*?:(bib-items){Firebaseから始めるWebサービス開発}{終わりの始まり - ???}<
+  +chapter?*?:(bib-items){Firebaseから始めるサービス開発}{終わりの始まり - ???}<
     +section{はじめに}<
       +p {
         技術的な発展に伴い、Webサービス開発を始めるための敷居は2010年代初頭に比べて圧倒的に下がっています。
@@ -115,7 +115,10 @@ let-block +pocketberserker = '<
               accountService: AccountService;
             };
             
-            export const AuthProvider: React.FC<Props> = ({ accountService, children }) => {
+            export const AuthProvider: React.FC<Props> = ({
+              accountService,
+              children,
+            }) => {
               const [account, setAccount] = useState<UserAccountState>({
                 user: null,
                 loading: true,
