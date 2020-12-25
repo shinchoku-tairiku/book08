@@ -1,0 +1,52 @@
+@import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+
+let bib-items =
+  [ (`firebase`, BibMisc
+    (|
+      title = Some {Firebase};
+      author = None;
+      howpublished = Some {\url(`https://firebase.google.com/?hl=ja`);};
+      year = None;
+      month = None;
+    |));
+    (`vercel`, BibMisc
+    (|
+      title = Some {Vercel - Develop. Preview. Ship. For the best frontend teams};
+      author = None;
+      howpublished = Some {\url(`https://vercel.com/`);};
+      year = None;
+      month = None;
+    |));
+    (`optimize-cloud-run-response-time`, BibMisc
+    (|
+      title = Some {Cloud Runの応答時間を最適化する3つの方法};
+      author = None;
+      howpublished = Some {\url(`https://cloud.google.com/blog/ja/products/gcp/3-ways-optimize-cloud-run-response-times`);};
+      year = None;
+      month = None;
+    |));
+    (`prisma`, BibMisc
+    (|
+      title = Some {Prisma - Next-generation ORM for Node.js and TypeScript};
+      author = None;
+      howpublished = Some {\url(`https://www.prisma.io/`);};
+      year = None;
+      month = None;
+    |));
+    (`react-hooks-rules`, BibMisc
+    (|
+      title = Some {フックのルール};
+      author = None;
+      howpublished = Some {\url(`https://ja.reactjs.org/docs/hooks-overview.html#rules-of-hooks`);};
+      year = None;
+      month = None;
+    |));
+    (`re-authentication`, BibMisc
+    (|
+      title = Some {メールリンクのリンクと再認証};
+      author = None;
+      howpublished = Some {\url(`https://firebase.google.com/docs/auth/web/email-link-auth?hl=ja#linkingre-authentication_with_email_link`);};
+      year = None;
+      month = None;
+    |));
+  ]

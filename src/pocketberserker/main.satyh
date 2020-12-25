@@ -1,6 +1,426 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+@import: local
 
 let-block +pocketberserker = '<
-  +chapter{pocketberserker担当章}{謎の名言絶対にいる}<
+  +chapter?*?:(bib-items){Firebaseから始めるサービス開発}{終わりの始まり - ???}<
+    +section{はじめに}<
+      +p {
+        技術的な発展に伴い、Webサービス開発を始めるための敷居は2010年代初頭に比べて圧倒的に下がっています。
+      }
+      +p {
+        本章では、筆者がFirebaseとTypeScriptを用いてミニマルなサービス開発した際に感じたことを書き連ねます。
+      }
+    >
+    +section{FirebaseとTypeScriptによるWebサービス開発}<
+      +p {
+        Firebase\cite(`firebase`);はGoogleが提供するmBaaSです。
+        モバイルのBackendに利用されるほか、Webサービスのバックエンドとして利用されることもあります。
+      }
+      +p {
+        Firebaseの利点は手軽に素早く構築できるところです。
+        ホスティング、認証、NoSQLデータベース、サーバーレス フレームワーク、ストレージが簡単に利用できるため、ある程度機能をもったサービスも効率よく開発できます。
+        また、Firebaseに閉じた開発であればコマンド1つでデプロイでき非常に便利です。
+      }
+      +subsection{Firebase Hosting}<
+        +p {
+          FirebaseでWebページをホスティングする場合はFirebase Hostingを利用することがほとんどでしょう。
+          Firebase HostingはCloud FunctionsやCloud Runと組み合わせることで、動的コンテンツを生成して配信できる強みがあります。
+        }
+        +p {
+          逆をいえば、ホスティング機能のみが必要なときにFirebase Hostingを利用する理由はあまりないと感じています。
+          特にNext.jsを採用する場合はVercel\cite(`vercel`);のほうが良い選択肢かもしれません。
+        }
+      >
+      +subsection{TypeScript}<
+        +p {
+          小さなWebサービスを素早く開発したい場合において、複数の言語を使うことそれ自体が足枷になりがちです。
+          エコシステムが異なることによりビルドパイプラインが複雑化するからです。
+          サービスが複雑化する前提であれば、FrontendとBackendで言語を分けることも最初から考えるのですが、とりあえず作ってみるという段階なら言語を絞ったほうが良いと筆者は考えています。
+          そういうわけで、筆者がミニマムなWebサービスを開発する際は、主にTypeScriptを使用しています。
+        }
+        +listing {
+          * 静的型付け
+          * ひとつの言語である程度Backendも書ける
+          * Cloud Functions for Firebaseを利用するため
+        }
+        +p {
+          筆者は静的型チェックがないと足を打ちぬきがちなので、まずJavaScriptが選択肢から外れます。
+          そこから、エコシステムが煩雑でなく気楽に書ける言語（筆者の主観です）を考えた結果TypeScriptという安牌に落ち着きました。
+          たまに言語の表現力に限界を感じたり、他の言語であれば標準で提供されている関数がなくつらい気持ちになることもありますが、
+          些末な問題かなと割り切ることにしています。
+        }
+        +p {
+          なお、これはあくまで開発序盤の話です。
+          TypeScriptやNode.jsでは不足と感じたら別言語を検討します。
+          例えば筆者の場合、RDBを導入すると決めたときは別言語に乗り換えるようにしています\footnote{昨今はprisma\cite(`prisma`);を使えばTypeScriptでも問題ないかもしれませんが、まだ未検証です}。
+          コンテナ技術の発達により、導入や移行がより容易になっているので、数年前に比べればさほど苦ではないように思います。
+        }
+      >
+      +subsection{Web FrontendのFramework}<
+        +p {
+          FrontendのFrameworkは様々なものがあり、どれを使うかは個人の趣味によると思われます。
+          筆者は最近はもっぱらNext.jsを利用しています。
+        }
+        +listing {
+          * 環境構築時に必要なものがまとめて入る
+          * webpackを0から設定する必要がない
+          * TypeScriptフレンドリー
+        }
+        +p {
+          素のReactで1から環境構築しようとすると何かと大変ですが、最初からNext.jsを使えばルーティングやwebpackなどが一通り手に入るので大変重宝しています。
+          あとはなんといっても、TypeScriptでしっかり型チェックを行える点です。
+        }
+        +p {
+          Next.jsとFirebaseを組み合わせる際に考慮すべきこととして、Firebase向けのReact Hooksライブラリを使用するかどうかという話があります。
+          React Hooksは関数のトップレベルで呼び出す必要がある\cite(`react-hooks-rules`);ので、
+          Firebase向けに作られたReact Hooksライブラリを使用するとUIとFirebaseが密結合することになります。
+          ローカルで開発する際はモックにしておきたい思考とは相反することになるので、こういったライブラリは利用できません。
+          Firebase Emulatorを利用して開発する人は使っても問題ないかもしれません\footnote{筆者は試したことないので断言できず}。
+          筆者は依存を少なくしておきたいので、基本的に前者の方針を取ることにしています。
+        }
+        +p {
+          なお余談ですが、プライベートな時間を使って本格的にWebアプリケーションを作り始めた2019年頃はNuxt.jsを使っていました。
+          当時は日本の各種サービスでNuxt.js導入の話を見聞きしていたことが主な理由ですが、
+          どうにもTypeScriptの恩恵が受けられない部分が多い感触があり、
+          複雑なものを作るとビルドに時間がかかる事がある（個人の主観です）と感じたため、最近はあまり触れていません。
+        }
+      >
+      +subsection{Firebase Authentication}<
+        +p {
+          Firebaseではユーザー認証のため機能やツールとしてFirebase Authenticationが用意されています。
+        }
+        +p {
+          簡単に使えて便利なFirebase Authenticationですが、\code(`onAuthStateChanged`);による認証取得に待たされるためユーザー体験的には微妙、という問題があります。
+          ネットワーク通信の関係上どうにもならないようので、適切にローディング処理を挿し込むか、Firebase Authenticationの利用を諦めましょう。
+          筆者の場合、Next.jsを使うときは次のようなhookを書いて使うようにしています。
+          \d-code(```
+            import React, { createContext, useState, useEffect } from "react";
+            import { UserAccount } from "../domain";
+            import { AccountService } from "../service";
+
+            // UserAccountはuidやnameといったユーザー情報を持つ型
+            // AuthContextを利用する際にFirebaseと密結合させないようdomainで定義した型を使う
+            export type UserAccountState = {
+              user: UserAccount | null;
+              loading: boolean;
+            };
+            export const AuthContext = createContext<UserAccountState>({
+              user: null,
+              loading: true,
+            });
+            
+            type Props = {
+              children: React.ReactNode;
+              // AccountServiceはinterface
+              accountService: AccountService;
+            };
+            
+            export const AuthProvider: React.FC<Props> = ({
+              accountService,
+              children,
+            }) => {
+              const [account, setAccount] = useState<UserAccountState>({
+                user: null,
+                loading: true,
+              });
+              const [subscribed, setSubscribed] = useState(false);
+            
+              useEffect(() => {
+                return accountService.onStateChanged((user) => {
+                  setAccount({
+                    user,
+                    loading: false,
+                  });
+                });
+              }, []);
+            
+              // ここに追加で必要なEffectを書く
+            
+              return (
+                <AuthContext.Provider value={account}>{children}</AuthContext.Provider>
+              );
+            };
+          ```);
+        }
+        +p {
+          筆者が実際に試してみた認証プロバイダーはGoogle, Twitter, そしてメールリンク方式です。
+          Google Providerは本家なだけあって特にはまり所なく使えました。
+          Twitter Providerは謎のエラーに苦しめられることがあるため（そして解決策を見つけられなかったため）あまりお勧めはできません。
+        }
+        +p {
+          メールリンクも特に問題なく使えていますが、サインアップ時のメール文を変更できないといった難点があります。
+          こういった制限を許容できないサービスを作ろうとしているなら、別サービスを利用するか自作する他ないでしょう。
+        }
+        +subsubsection{メールリンク方式の再認証}<
+          +p {
+            メールリンク方式で筆者が嵌った点として、メールアドレス変更処理があります。
+            メールアドレス変更は再認証してからでないと行えないのですが、公式ドキュメントを読んだとおりに書いただけでは動かなかったのでした。
+          }
+          +p {
+            次のコードは公式ドキュメントに記載されていたサンプルコード\cite(`re-authentication`);です。
+            \d-code(```
+              // Construct the email link credential from the current URL.
+              var credential = firebase.auth.EmailAuthProvider.credentialWithLink(
+                  email, window.location.href);
+              
+              // Link the credential to the current user.
+              firebase.auth().currentUser.linkWithCredential(credential)
+                .then(function(usercred) {
+                  // The provider is now successfully linked.
+                  // The phone user can now sign in with their phone number or email.
+                })
+                .catch(function(error) {
+                  // Some error occurred.
+                });
+            ```);
+            これを素直に取り入れるだけではエラーになって終わります。
+            なぜかというと……再認証していないからです（！？）。
+          }
+          +p {
+            正しくは、email変更ページでサインイン処理を実行し、
+            メール文に記載されたリンクにアクセスしてリダイレクトされてから前述のコードを呼び出す必要があります。
+            \d-code(```
+              // 変更前のemail
+              firebase.auth().sendSignInLinkToEmail(currentEmail, {
+                // サインイン処理後にemail変更ページのurlにリダイレクト
+                window.location.href,
+              });
+            ```);
+            このフローなら認証直後なのでエラーになることなくメール変更処理が行えます。
+            \d-code(```
+              await firebase.auth().currentUser?.updateEmail(newEmail);
+              await firebase.auth().currentUser?.sendEmailVerification({
+                // メール変更検証リンク
+                url,
+              });
+            ```);
+          }
+        >
+      >
+      +subsection{Firestore}<
+        +p {
+          FirebaseはNoSQLデータベースです。
+          セキュリティルールを定義することでウェブクライアントから直接呼び出せたり、
+          ドキュメントをリアルタイムに取得できる機能、
+          Cloud Functionsを用いてトリガーを簡単に用意できるといった利点があります。
+        }
+        +p {
+          ルールを定義することでクライアントから直接呼び出せる点は、メリットであると同時にリスクでもあります。
+          serverを用意せずとも開発できる一方で、ルールを書き間違えると誰でもデータを読み書きできてしまうようになるからです。
+          そのような事態にならないよう、
+          ルールは\code(`@firebase/rules-unit-testing`);ライブラリを用いてテストを記述することになるのですが、
+          これはこれで大変（面倒だけど絶対必要）な作業です。
+          というわけで、そういったことを考えなく済むようにするため、
+          Firestoreを使うにしてもserverからのみ呼び出す形に落ち着かせることもあります。
+        }
+        +p {
+          Firestore + TypeScriptで悩ましいのは型が弱い点です。
+          \code(`DocumentData`);という型は実質\code(`any`);のような存在なので、
+          別のオブジェクトを用意したうえで自力で型をつけてあげる必要があります。
+          \d-code(```
+            const snapshot = await firestore.collection("users").doc(id).get();
+            if (snapshot.exists) {
+              // DocumentData
+              const data = snapshot.data();
+              if (data) {
+                const user: User = {
+                  id: snapshot.id,
+                  name: data.name,
+                  email: data.email,
+                };
+                return user;
+              }
+            }
+            return null;
+          ```);
+        }
+        +p {
+          Firebaseでは、\code(`onSnapshot`);メソッドを使用することでドキュメントをリアルタイムに取得できます。
+          ロングポーリングやWebSocketを自前で実装することなくデータを受け取れるので、便利なことがあります。
+          例えば、お知らせ通知機能を作るとき、\code(`onSnapshot`);に用いてデータを取得すればWEB画面を開いているユーザーにリアルタイムに通知を行えます。
+        }
+        +p {
+          インフラ視点からみたFirestoreの悩みどころは、1プロジェクトに1つしかFirestoreを用意できない点です。
+          develop, staging, productionといった風に環境をわけたいなら3プロジェクト必要ということになります。
+          各開発者ごとにsandboxを用意するならプロジェクト数はさらに増加します。
+        }
+      >
+      +subsection{Cloud Functions for Firebase}<
+        +p {
+          Cloud Functions for Firebase はいわゆるserverless frameworkです。
+          リクエストによってトリガーされるイベントに応じてバックエンドコードが呼び出されます。
+          なお、このバックエンドコードはJavaScriptまたはTypeScriptに限定されます。
+        }
+        +p {
+          Cloud Functionsのトリガーには次のものがあります。
+        }
+        +listing {
+          * HTTP
+          * Firestore
+          * Cloud Storage
+          * スケジューラー
+          * PubSubによるイベントのsubscribe
+        }
+        +p {
+          このうちFirestoreのトリガーとCloud Storageのトリガーは（おそらく）代替がありません。
+          それ以外の機能はGCPの知識があれば他の言語や道具で代替できるでしょう。
+        }
+        +p {
+          ちなみに、スケジューラーやPubSubを利用すると無料範囲で開発、運用とはいかなくなることが多いです。
+          節約したい場合は呼び出し頻度を調整しましょう。
+        }
+        +p {
+          Cloud Functions for Firebaseを利用するうえで癖が強いと感じる点は、entrypointをひとつにまとめる必要があることでしょう。
+          関数によっては不要な依存関係も含めてロードしなければならないので、実装次第でコールドスタートに時間がかかることがあります。
+          そういうこともあり、筆者は依存関係には常に注意を払い、重たい依存関係を持つ機能はCloud Runを検討することにしています。
+        }
+        +p {
+          Cloud Functions for Firebaseの難点のひとつとして、Node.jsランタイムの更新が遅い問題があります。
+          最新メジャーバージョンを使うことは基本できないと思っておいたほうがいいでしょう。
+          とはいえ、Node.js 10以降はそれ以前に比べると機能も充実してきたため、あまり問題にならない可能性もありです。
+        }
+      >
+      +subsection{Cloud Storage for Firebase}<
+        +p {
+          FirebaseではFirebase SDKを用いてファイルを簡単にGoogle Cloud Storage（GCS）へアップロード、ダウンロードできます。
+          アップロードしたファイルは他のGoogle Cloudサービスからも利用可能です。
+        }
+        +p {
+          Cloud StorageもFirestoreと同様、セキュリティルールを記述することでクライアントからアップロード、ダウンロードが可能になります。
+          ただ、リクエストを検証しアクセス権の有無を確認しているためか、ダウンロードはGCSの公開URLから直接取得するよりも時間がかかるようです。
+          そのため、公開可能な画像についてはCloud Functions等と連携してGCSの公開URLを用いたほうがいいかもしれません。
+          あるいはCDNを導入のも一手でしょう。
+        }
+      >
+      +subsection{その他}<
+        +p {
+          Firebaseには他にも様々な機能があるので、気になる人はぜひドキュメントを眺めてください。
+          Mechine Learningとかも用意されていてなかなか読み応えがあります。
+        }
+        +p {
+          前述した以外に筆者が活用しているものとしてはGoogle AnalyticsとFirebase Performance Monitoringがあります。
+          Google Analyticsは基本的に有効にしています。
+          Performance Monitoringは他の手段で代用できるため、たまに使うことがあるくらいです。
+        }
+      >
+    >
+    +section{FirebaseとGCP}<
+      +p {
+        FirebaseはGCP上に構築されています。
+        そのため、別途GCPプロジェクトを用意せずともGCPの各種サービスを利用できます。
+        中にはFirebaseの機能と被っているものもあるので、本項では筆者のサービスの使い分けを紹介します。
+      }
+      +subsection{Functions? GAE? Cloud Run?}<
+        +p {
+          筆者はだいたい次のように使い分けています。
+        }
+        +listing {
+          * Firestoreのトリガーを使いたい: Cloud Functions for Firebase
+          * Cloud Storageのトリガーを使いたい: Cloud Functions for Firebase
+          * 手軽にスケジューラーを用意したい: Cloud Functions for Firebase
+          * 手軽にPubSubを利用したい: Cloud Functions for Firebase
+          * Web UI用の簡素なAPI: Cloud Functions for Firebase
+          * Web UI用のAPI: GAE
+          * 重量級の依存ライブラリ: Cloud Run
+          * 他言語で実装: Cloud Run
+        }
+        +p {
+          基本的にな戦略としては、序盤はCloud Functionsで開発していき、問題が発生したら別の道具に切り替えます。
+          例えば、PubSubの受信側で重たい処理をしたいときはCloud Runを使うことにしています。
+        }
+        +p {
+          Cloud FunctionsやCloud Runはcold startが存在する関係上、どうしても素早くレスポンスを返すことができない場合があります。
+          Node.jsではプロセス起動時にモジュール読み込みが発生するため、実装次第ではこの問題がより顕著になります。
+          最適化するプラクティスが存在するとはいえ\footnote{Cloud Runで応答時間を最適化する方法は公式の記事\cite(`optimize-cloud-run-response-time`);があります}、0にできるものではありません。
+          Webサービスを実装するうえで、cold startによる応答遅延はユーザー体験の悪化につながるので、気になるようなら他の道具（GAE, GKE）を検討しましょう\footnote{スモールスタートにするならGAE一択だと思います}。
+        }
+        +p {
+          余談ですが、GKEを持ち出すのはよほどの規模感になったときかな、と考えています。
+          以前はCloud ArmorによるDDos対策を考えるとGKEを視野に入れるべきかなと考えていましたが、
+          Serverless NEGの登場によってCloud FunctionsやCloud RunもCloud Armorと連携させることが可能となったため、
+          個人開発でGKEを導入する理由にはならなくなったのではないかなと。
+        }
+      >
+      +subsection{Firestore? Cloud SQL?}<
+        +p {
+          GCPには様々なデータベースの選択肢が存在します。
+          その中からミニマルな個人開発で選ぶのであればCloud SQLかFirestoreになるでしょう。
+        }
+        +p {
+          では、2のうちどちらを使うべきか……筆者は”迷ったらCloud SQL”の方針をとっています。
+          Firestoreは便利な一方で癖が強く\footnote{NoSQLと呼ばれるもので癖の強くないもの is 何}RDBにはない制約があります。
+          そういった制約に縛られながら開発を続けるよりは、健全なアーキテクチャや設計に倒したほうが未来に負債を生まなくて済むはずです
+          \footnote{一方でRDBを仕事以外で運用したくない気持ちもある……難しい}。
+        }
+        +p {
+          余談ですが前述したように、筆者はRDB導入と同時にTypeScript以外の言語も導入してしまうため移行作業が滅茶苦茶がしんどくなりがちです。
+          そして、ここまでやるならとインフラもコードで管理しようとTerraformを導入して破滅したり、
+          CI・デプロイフローを再整備する必要に迫られてさらに破滅します……時間がいくらあっても足りません、
+          誰か助けて。
+        }
+      >
+    >
+    +section{Firebaseでカバーできない部分}<
+      +p {
+        Firebaseは便利ですが何でも提供されているわけではありませんし、GCPと連携できるとはいえGCPにないものもあります。
+        ここでは、どういった機能がFirebaseにないか軽く紹介します。
+      }
+      +subsection{検索}<
+        +p {
+          FirestoreはRDBのような複雑なクエリ検索を行えないので、
+          検索機能を実装する際はAlgoliaやElasticsearchといった検索に特化したものを利用することになります。
+        }
+        +p {
+          Firestoreと検索サービスへのデータの同期にはCloud FunctionsのFirestoreトリガーを使うのが楽でしょう。
+          ユーザーの操作起因の処理と同時に更新を行う手もありますが、
+          処理が複雑化しエラーの可能性を増やしてしますし、
+          応答までのレスポンスも長くなってしまうのでわけてしまって良いのではないかと筆者は考えています。
+        }
+      >
+      +subsection{メール送信}<
+        +p {
+          Firebase（GCP）ではメール送信サービスは提供されていません。
+          サービス利用者に対し何らかのメールを送りたい場合はSendGridやmailgunといったSaaSを導入しましょう。
+        }
+        +p {
+          メール送信SaaSはそこそこお金がかかりますが、メールを送信したいなら諦めて金の弾丸を使うことをお勧めします。
+          安く済ませたいからと別の手段を用いた結果、サービスイン後にメールが送信できなくなった……という不幸に見舞われないだけでおつりがでます。
+        }
+      >
+      +subsection{決済}<
+        +p {
+          （他のmBaaS系もそうですが）Firebaseは決済や振込といった機能をもっていません。
+          そのため、StripeやPAY.JPといった決済サービスや銀行APIを利用することになります。
+        }
+        +p {
+          決済について詳しい話を書こうとすると、それだけで1トピックになってしまうのでここではこれ以上の言及は避けたいと思います。
+        }
+      >
+      +subsection{OGP画像の動的生成}<
+        +p {
+          単純なOGP画像の生成であればCloud FunctionsやCloud Runで処理してしまう手もありますが、
+          高度なことをするのであればCDNサービスに任せてしまうのも一手です。
+          CDNサービスでを用いるとユーザーの利用ブラウザにあわせて最適化した画像を配信できたりするからです。
+        }
+        +p {
+          筆者が利用経験を持つCDNサービスはCloudinaryとImgixです。
+          CloudinaryはそこそこわかりやすいAPIで無料枠があるためちょっとしたサービスに使いやすい印象をもっています。
+          Imgixは従量課金で毎月最低限の料金が発生しますが、GCSやS3との連携が容易でした。
+        }
+      >
+    >
+    +section{おわりに}<
+      +p {
+        文字数のわりにあまり内容がない感じになってしまいました、力量不足を痛感します。
+        もう少し技術書典の開催間隔が長ければ……いや、もっと精進せねば。
+      }
+      +p {
+        ここ1, 2年はプロダクト開発に時間を割いてみています。
+        最低限全部ひとりでできるようになっておいたほうが幅が広がりそうだなと思って始めましたが、
+        最近はこれ作ってみたらどういう感じになるのだろう、
+        という意識から実装をはじめてみることも増えてきました。
+        作ってみたいものが自分にもあったのだなと驚いています。
+      }
+    >
   >
 >
