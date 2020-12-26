@@ -18,3 +18,7 @@ build: .satysfi/dist/fonts
 .PHONY: clean-fonts
 clean-fonts:
 	rm -rf .satysfi/dist/fonts/
+
+.PHONY: check
+check: .satysfi/dist/fonts
+	$(SATYSFI) --debug-show-overfull src/main.saty -o check.pdf
