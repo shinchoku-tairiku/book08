@@ -57,12 +57,12 @@ Shader "Example/URPUnlitShaderBasic"
 
             struct Varyings
             {
-                // SV_POSITION という意味の、クリップ空間の頂点座標をこの構造体では持っている必要がある
+                // クリップ空間の頂点座標をこの構造体では持っている必要がある
+                // SV_POSITION というセマンティクスを指定する (後述)
                 float4 positionHCS  : SV_POSITION;
             };
 
-            // 上記の 'Varyings' 構造体で定義されたプロパティと頂点シェーダの定義
-            // この vert 関数の返す型は、上記の構造体と同じである必要がある
+            // 頂点シェーダの定義。上記の 'Varyings' 構造体で定義されたプロパティを埋める
             Varyings vert(Attributes IN)
             {
                 // Varyings構造体で出力データの (OUT)を宣言
@@ -74,6 +74,7 @@ Shader "Example/URPUnlitShaderBasic"
             }
 
             // フラグメントシェーダの定義
+            // SV_Targetというセマンティクスを指定し、half4型の値を返す (後述)
             half4 frag() : SV_Target
             {
                 // 色を固定で定義したものを結果として返す
@@ -179,12 +180,27 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
      Properties
 -    { }
 +    {
-+        _BaseColor("BaseColor", Color) = (1,1,1,1)
++        _BaseColor ("BaseColor", Color) = (1,1,1,1)
 +        _MainTex ("Lit (RGB)", 2D) = "white" {}
 +    }
 ```){}
 
 +p {
+
+\coderef(`toon01.props`); では、シェーダのプロパティを2つ追加しています。_BaseColorと_MainTexですね。
+
+}
+
++p {
+
+構文\footnote{ShaderLabのプロパティに関する構文ドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-Properties.html`);}は、 名前 ("表示名", 型) = デフォルト値 になります。また、変数名は_から始めるのがUnityでは一般的なようです。
+
+}
+
++p {
+
+それを踏まえると、1つ目のプロパティの名前は _BaseColor で、エディタには "BaseColor" と表示され、型はColor、デフォルト値は (1,1,1,1) で真っ白、ということです。2つ目のプロパティの名前は _MainTex、エディタには "Lit (RGB)" と表示され、型は2D (2Dテクスチャ)、デフォルト値は "white" \{\} で白一色のプリセット\footnote{このプリセットは構文のドキュメントでも紹介されており、"white"の他には"black"、"gray"、"bump"、"red"があります。}、ですね。
+
 }
 
 +code(`toon01.vars`)(```
@@ -199,6 +215,24 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
 +
 ```){}
 
++p {
+
+次にシェーダコード本体に入っていきます。\coderef(`toon01.vars`); では、\coderef(`toon01.props`); で定義したシェーダのプロパティをシェーダコードから参照しています。
+
+構文\footnote{Cg\/HLSLのシェーダプロパティに関する構文ドキュメント \url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-PropertiesInPrograms.html`);}は、uniform 型 変数名 になります。uniformは必須ではないようです(がここでは書いておきます)。
+
+}
+
++p {
+
+プロパティは基本的に\coderef(`toon01.props`);のシェーダのプロパティで定義したものと同名のものを参照します。型名が異なっているのでその点について説明すると、シェーダのプロパティ_BaseColorで指定していたColor型は、Cg/HLSLではfloat4 or (half4 or fixed4)型にマッピングされます。_MainTexの2D型は、sampler2D型へマッピングされます。
+
+}
+
++p {
+一つfloat4型で_MainTex_STという見覚えのない変数がありますね。テクスチャ名_STのような命名規則でプロパティを参照してるのですが、これはUnityの特別なテクスチャプロパティで、このプロパティでは対応するテクスチャ名のタイリングとオフセット情報をUntiyが勝手に渡してくれます。他にもいくつかあるので、詳細は紹介しているドキュメントを参照してください。
+}
+
 +code(`toon01.attrs`)(```
              struct Attributes
              {
@@ -206,6 +240,21 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
 +                float2 texcoord0    : TEXCOORD0;
              };
 ```){}
+
++p {
+\coderef(`toon01.attrs`);では頂点シェーダの入力である構造体に1つフィールドを追加しています。texcoord0という名前でTEXCOORD0というシェーダのセマンティクスの指定がついています。
+}
+
++p {
+
+説明を省いていましたが、シェーダの入出力にはそれらの値がどのような意図をもっているのかということを知らせる指定をつけてあげる必要があり、これをシェーダのセマンティクスと呼びます。POSITIONやTEXCOORD0はセマンティクスの指定だったわけですね。
+
+}
+
++p {
+
+Attributesは頂点シェーダの入力で用いるので、頂点シェーダ入力セマンティクス\footnote{シェーダーセマンティクスのドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-ShaderSemantics.html`);}で定義されている通りに、それぞれのセマンティクスに対応したデータが渡されてきます。POSITIONは頂点位置、TEXCOORD0は1つ目のUV座標になります。その他のセマンティクスについては、ドキュメント\footnote{頂点シェーダへの頂点データの渡し方のドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-VertexProgramInputs.html`);}も参照にしてみてください。
+}
 
 +code(`toon01.vary`)(```
              struct Varyings
@@ -215,10 +264,33 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
              };
 ```){}
 
++p {
+
+\coderef(`toon01.vary`);では、頂点シェーダの出力でありフラグメントシェーダの入力でもある構造体に1つフィールドを追加しています。uv0という名前でTEXCOORD0というセマンティクス指定がついています。
+
+}
+
++p {
+
+こちらも説明を省いていましたが、頂点シェーダの出力は最終的な頂点のクリップ空間の座標を出力する必要があります。つまり、これが最初からあるSV_POSITIONセマンティクス指定だったというわけです。
+
+}
+
++p {
+
+一方、今回追加したuv0のようなSV_POSITIONセマンティクス以外をどうするかについては、シェーダ作者の自由となります。公式ドキュメント曰くベストプラクティスとしてはTEXCOORDnとして連番をつけていけば良いとのことなので、まずTEXCOORD0から指定しています。
+
+}
+
++p {
+
+この今回作るトゥーンシェーダでは、uv0にはただの頂点のuv情報を入れておきます。
+
+}
+
 +code(`toon01.vert`)(```
              Varyings vert(Attributes IN)
              {
--
                  Varyings OUT;
 
                  OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
@@ -227,6 +299,12 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
                  return OUT;
              }
 ```){}
+
++p {
+
+ようやく\coderef(`toon01.vert`);の頂点シェーダ本体まで来ましたね…。ここは単純で、入力のUV座標を出力にコピーを追加しただけになります。
+
+}
 
 +code(`toon01.frag`)(```
 -            half4 frag() : SV_Target
@@ -244,6 +322,18 @@ UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
          }
      }
 ```){}
+
++p {
+
+さて最後は\coderef(`toon01.frag`);のフラグメントシェーダ本体です。まず初めに引数で頂点シェーダの出力であるVaryings型の値を受け取るように変更しています。これで頂点シェーダの結果をフラグメントシェーダで用いることができます。
+
+}
+
++p {
+
+引数の変更の前に、フラグメントシェーダのSV_Targetが気になっていた方もいると思います。こちらも説明を省いていましたが、これもセマンティクスの1つで、フラグメントシェーダ出力セマンティクスで定義されているとおり色を出力とするフラグメントシェーダという意味になります。この場合戻り値の型はhalf4である必要があります。
+
+}
 
 +figure(`toon01`)(10cm){}
 
