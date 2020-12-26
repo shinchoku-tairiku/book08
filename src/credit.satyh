@@ -21,9 +21,9 @@ let-block ctx +credit =
     left-block (ctx |> set-font-size (get-font-size ctx *' 1.8)) 5cm {進捗大陸08} {}
     +++ left-block ctx-items 5cm {2020年12月26日 初版 第1刷 発行} {}
     +++ left-block ctx-items len {著者} {\@yutopp, \@no_maddo, \@pocketberserker, \@youxkei}
-%    +++ left-block ctx-items len {表紙写真} {--}
-%    +++ left-block ctx-items len {表紙画像加工} {\url(`http://williamngan.github.io/kubist/`);}
-%    +++ left-block ctx-items len {表紙フォント} {鉄瓶ゴシック}
+    +++ left-block ctx-items len {表紙写真} {Alla Khananashvili}
+    +++ left-block ctx-items len {表紙画像加工} {\url(`http://williamngan.github.io/kubist/`);}
+    +++ left-block ctx-items len {表紙フォント} {鉄瓶ゴシック}
   in
   % clear-page +++ %% 必要なければ消す
   block-skip 9cm +++ block-in ctx k
