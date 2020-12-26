@@ -13,13 +13,13 @@ let-block +shader-kaku-sonomaeni = '<
 
 UnityではシェーダをShaderLabという言語で記述し、その一部でHLSLを利用してシェーダ本体のロジックを実装します\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-ShadingLanguage.html`);}。
 
-Unityの提供するマクロなどを利用し、なるべくプラットフォーム依存にならないようにHLSLを記述することでビルドターゲットの各プラットフォームで利用されるシェーダコードへUnityがよしなに変換を行います\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Reference.html`);}。
+Unityが提供するマクロや関数などを駆使し、プラットフォーム依存にならないようHLSLを記述することで、ビルドターゲットの各プラットフォームで利用される実際のシェーダコードへ変換が行われるようです\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Reference.html`);}。
 
 }
 
 +p {
 
-また、シェーダを準備したとしても、それを用いて画面に描画するためには手順に沿ってUnityからシェーダコードを呼び出して貰わなければなりません。
+しかし、シェーダだけ準備したとしても、画面に描画するためにはUnityからシェーダコードを呼び出して貰わなければなりません。
 
 }
 
@@ -35,7 +35,7 @@ Unityの提供するマクロなどを利用し、なるべくプラットフォ
 
 +p {
 
-レンダリングパイプラインとは、シーンの情報(3Dモデルやライトなど)を画面を描画にする一連の処理のことを指します。この一連の中でシェーダが呼び出されるというわけですね。
+レンダリングパイプラインとは、シーンの情報(3Dモデルやライトなど)から画面を描画にする一連の処理のことを指します。この一連の中でシェーダコードが呼び出されるというわけですね。
 
 }
 
@@ -60,7 +60,7 @@ Unityの提供するマクロなどを利用し、なるべくプラットフォ
 
 +p {
 
-そのため、開発を始める前にどのレンダリングパイプラインを用いるかを慎重に選択しておく必要があります。
+そのため、開発を始める前にどのレンダリングパイプラインを用いるかということを慎重に選択しておく必要があります。
 
 }
 
@@ -68,7 +68,7 @@ Unityの提供するマクロなどを利用し、なるべくプラットフォ
 
 +p {
 
-`Built-in Render Pipeline` は、Unity組み込みのデフォルトのレンダリングパイプラインです。いまインターネット上で公開されていて特に断りがないUnityのシェーダは、このパイプライン用に記載されているものが大半です。
+`Built-in Render Pipeline` は、Unity組み込みのデフォルトのレンダリングパイプラインです。いまインターネット上で公開されており特に断りがないUnityのシェーダは、このパイプライン用に記載されているものが大半です。
 
 }
 
@@ -87,7 +87,7 @@ Unityの提供するマクロなどを利用し、なるべくプラットフォ
 }
 
 +p {
-Unityが提供する構築済みのSRPは2つあります\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/render-pipelines.html`);}。モバイルからハイエンドまでの幅広いプラットフォーム向けに最適化された`Universal Render Pipeline (URP)` と、高性能なプラットフォーム向けに絞り表現力の高い`High Definition Render Pipeline (HDRP)`です。
+Unityが提供する構築済みのSRPは2つあります\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/render-pipelines.html`);}。モバイルからハイエンドまでの幅広いプラットフォーム向けに最適化された`Universal Render Pipeline (URP)` と、高性能なプラットフォーム向けの高い表現力を持つ`High Definition Render Pipeline (HDRP)`です。
 
 }
 
