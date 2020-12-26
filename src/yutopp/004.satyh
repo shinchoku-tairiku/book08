@@ -335,18 +335,42 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 
 }
 
++p {
+
+話を戻しますと、コード中の tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex)) にてテクスチャのuvに対応する部分の色を取得します。TRANSFORM_TEX は _MainTex_ST を参照してタイリングとオフセットの計算をしてくれます。
+
+}
+
++p {
+
+次の行で上記のテクスチャの色と_BaseColorを乗算\footnote{色味をパラメータから変更する用途で用いる}し、その結果をフラグメントシェーダの計算結果としています。
+
+}
+
++p {
+それでは、上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう((\figref(`toon01`);))。
+}
+
 +figure(`toon01`)(10cm){}
 
++p {
+
+テクスチャの内容が反映されていますね。やったぜ。
+
+}
+
 >
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-+subsubsection{UV座標 (Tangent space)}<
->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 +subsection{影をつける (Toon02)}<
+
++p {
+
+次は影をつけていきましょう。影が入ると一気に細部の見栄えが良くなるように感じます。
+
+}
 
 +code(`toon02.props`)(```
  {
@@ -362,6 +386,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 +        _ShadowShift("ShadowShift", Range(-1, 1)) = 0.0
      }
 ```){}
+
++p {
+
+\coderef(`toon02.props`);では、影を出す用のパラメータをいくつか追加します。
+
+}
 
 +code(`toon02.vars`)(```
      SubShader
@@ -381,6 +411,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 +
 ```){}
 
++p {
+
+\coderef(`toon02.vars`);では、ライトを扱うことのできるライブラリコードの新規読み込みと、\coderef(`toon02.props`);で追加したパラメータをシェーダから参照できるようにしています。
+
+}
+
 +code(`toon02.attrs`)(```
              struct Attributes
              {
@@ -391,6 +427,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
              };
 ```){}
 
++p {
+
+\coderef(`toon02.attrs`);では、頂点シェーダの引数として新たに法線とタンジェントを受け取るように変更しています。
+
+}
+
 +code(`toon02.vary`)(```
 @@ -32,6 +46,7 @@
              {
@@ -399,6 +441,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 +                float3 normalDirWS  : TEXCOORD1;
              };
 ```){}
+
++p {
+
+\coderef(`toon02.attrs`);では、フラグメントシェーダの入力として新たにワールド空間の法線を追加しています。
+
+}
 
 +code(`toon02.vert`)(```
              Varyings vert(Attributes IN)
@@ -413,6 +461,20 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
              }
 ```){}
 
++p {
+
+\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにした法線とタンジェントから、ワールド空間の法線を計算するようになりました。GetVertexNormalInputs は URPで提供されるようになったAPIです。
+
+}
+
++p {
+
+法線とタンジェントのイメージは以下の\figref(`normal-tegaki`); のような感じを思い浮かべておけば大丈夫です。
+
+}
+
++figure(`normal-tegaki`)(10cm){}
+
 +code(`toon02.frag`)(```
              half4 frag(Varyings IN) : SV_Target
              {
@@ -421,6 +483,15 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 +                Light light = GetMainLight();
 +                float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
 +
+```){}
+
++p {
+
+\coderef(`toon02.frag`);のフラグメントシェーダの先頭部分です。原点からライト方向へのベクトルを計算し(ワールド空間)、正規化しています。
+
+}
+
++code(`toon02.frag2`)(```
 +                // 平行光源と法線の内積を取る。向きが同じほど1
 +                float NdotL = dot(normalDirWS, lightDirWS);
 +                float diffuse = max(0, smoothstep(_ShadowShift, _ShadowGradation + _ShadowShift, NdotL));
@@ -439,17 +510,66 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
              ENDHLSL
 ```){}
 
++p {
+
+\coderef(`toon02.frag2`);のフラグメントシェーダの残り部分です。原点からライト方向へのベクトル(平行光源であるため)と、モデルの法線ベクトルの内積を計算しています。
+
+この場合、モデルの法線ベクトルがとライトモデルの法線が一致しているほど1, 一致していないほど-1になります。例として、\code(`return half4(NdotL, NdotL, NdotL, 1.0);`); といったコードをdiffuseの定義の直後に入れてみると、\figref(`toon02ndot`);のようになります。
+
+}
+
++figure(`toon02ndot`)(5cm){}
+
++p {
+
+ライト(このシーンでは右上の方にあります)の方に向いている面ほど明るく、そうでないほど暗くなっていることから、意図通りの値が取れていそうなことが分かりますね\footnote{しばしばこのような方法で計算結果が合っているかのデバッグをしたりします…。}。
+
+}
+
++figure(`toon02smooth`)(5cm){}
+
++p {
+
+\figref(`toon02smooth`); がその次のsmoothstep関数の値を表しています。これにより、影のグラデーションの滑らかさを計算します。
+
+}
+
++p {
+
+最後に、diffuseの比率で明るい部分はこれまでの色、暗い部分は影の色を計算し、それを加算した値を最終的な色とします。それでは、再び上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう(\figref(`toon02`);)。
+
+}
+
 +figure(`toon02`)(10cm){}
 
-+figure(`toon02-50`)(10cm){}
++p {
 
-+figure(`toon02-100`)(10cm){}
+いい感じに影が出ていますね。やったぜ！
+
+}
+
++row{
+| \minipage(0.5)<+figure(`toon02-50`)(7cm){_ShadowGradation = 50}>
+| \minipage(0.5)<+figure(`toon02-100`)(7cm){_ShadowGradation = 100}>
+|}
+
++p {
+
+ちなみに、\figref(`toon02-50`);と\figref(`toon02-100`);のように_ShadowGradationの値を変えることで、このように影の雰囲気が変わります。
+
+}
 
 >
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 +subsection{リムライトの追加 (Toon03)}<
+
++p {
+
+最後にリムライトを実装していきましょう。ライブで後ろからのスポットライトにより輪郭が光るような見栄えになり、テンションが上がります[要出典]。
+
+}
 
 +code(`toon03.props`)(```
  {
@@ -467,6 +587,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
      }
 ```){}
 
++p {
+
+\coderef(`toon03.props`);では、リムライト用のパラメータをいくつか追加します。
+
+}
+
 +code(`toon03.vars`)(```
      SubShader
 @@ -34,6 +39,10 @@
@@ -481,6 +607,13 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
                  float4 positionOS   : POSITION;
 ```){}
 
++p {
+
+\coderef(`toon03.vars`);では、\coderef(`toon03.props`);で追加したパラメータをシェーダから参照できるようにしています。
+
+}
+
+
 +code(`toon03.vary`)(```
 @@ -47,6 +56,7 @@
                  float4 positionHCS  : SV_POSITION;
@@ -489,6 +622,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
 +                float3 positionWS   : TEXCOORD2;
              };
 ```){}
+
++p {
+
+\coderef(`toon03.vary`);、フラグメントシェーダの入力として新たにワールド空間の頂点座標を追加しています。
+
+}
 
 +code(`toon03.vert`)(```
              Varyings vert(Attributes IN)
@@ -502,6 +641,12 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
                  return OUT;
              }
 ```){}
+
++p {
+
+\coderef(`toon03.vert`); の頂点シェーダでは、ワールド空間の頂点座標を計算するようになりました。GetVertexPositionInputs は URPで提供されるようになったAPIです。
+
+}
 
 +code(`toon03.frag`)(```
 @@ -69,16 +82,23 @@
@@ -530,7 +675,19 @@ Attributesは頂点シェーダの入力で用いるので、頂点シェーダ�
              }
 ```){}
 
++p {
+
+\coderef(`toon03.frag`); のフラグメントシェーダでは、新たにリムライトの色を計算するようになりました。こちらは前回の\coderef(`toon02.frag`);の応用で、今度はモデルの表面座標からカメラ方面へのベクトルと法線ベクトルの内積を計算しています。この場合、カメラに向いている面は今までどおり、そうでない面ほどリムライトの色が加算されるようになります。それでは、再び上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう(\figref(`toon03`);)。
+
+}
+
 +figure(`toon03`)(10cm){}
+
++p {
+
+いい感じにリムライトが出ていますね。やったぜ！！
+
+}
 
 >
 
