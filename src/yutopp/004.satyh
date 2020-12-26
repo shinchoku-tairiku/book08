@@ -1,0 +1,577 @@
+@import: base
+
+let-block +shader-kaku = '<
++section{URPでトゥーンシェーダを書く}<
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{基本のシェーダの構造を掴む}<
+
++p {
+
+ここまでくれば、シェーダにまつわる周辺のパイプラインの事情と、シェーダの開発方法の雰囲気がなんとなく頭の中に入っていると思います。
+
+この章では上記のURP向けのトゥーンシェーダを書いていきます\footnote{正直なところ、`Built-in Render Pipeline`で全く困ることはない（資料も多い）のですが、ここでは今後を見越した勉強のため `URP` を選択しました。}。
+
+}
+
++p {
+
+それではまず、URPの基本的なunlit\footnote{ライティングなしという意味}シェーダのサンプル\footnote{\url(`https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@8.3/manual/writing-shaders-urp-basic-unlit-structure.html`);}を引用して、コードの構造の説明をします (コメントは書き換えています)。
+
+}
+
++code(`toon00`)(```
+// ShaderLabコード。Shaderの名前は"Example/URPUnlitShaderBasic"
+Shader "Example/URPUnlitShaderBasic"
+{
+    // Unityから受け取るパラメータを指定する場所。この例では空
+    Properties
+    { }
+
+    // Shader本体を記述する場所
+    SubShader
+    {
+        // このSubShaderのレンダリングパイプラインにURPを利用するという指定
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+
+        Pass
+        {
+            // HLSLコードブロックの開始
+            HLSLPROGRAM
+
+            // 頂点シェーダの名前を 'vert' と定義
+            #pragma vertex vert
+            // フラグメントシェーダの名前を 'frag' と定義
+            #pragma fragment frag
+
+            // URPパッケージに含まれる便利マクロや関数などを読み込む
+            // このパッケージのディレクトリ以下には他にも様々なライブラリが提供されている。
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            // この例では 'Attributes' 構造体を頂点シェーダの入力として使う
+            struct Attributes
+            {
+                // 'positionOS' 変数はオブジェクト空間の頂点座標を持つ
+                float4 positionOS   : POSITION;
+            };
+
+            struct Varyings
+            {
+                // SV_POSITION という意味の、クリップ空間の頂点座標をこの構造体では持っている必要がある
+                float4 positionHCS  : SV_POSITION;
+            };
+
+            // 上記の 'Varyings' 構造体で定義されたプロパティと頂点シェーダの定義
+            // この vert 関数の返す型は、上記の構造体と同じである必要がある
+            Varyings vert(Attributes IN)
+            {
+                // Varyings構造体で出力データの (OUT)を宣言
+                Varyings OUT;
+                // TransformObjectToHClip関数で、頂点座標をオブジェクト空間からクリップ空間に変換
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                // 出力を返す
+                return OUT;
+            }
+
+            // フラグメントシェーダの定義
+            half4 frag() : SV_Target
+            {
+                // 色を固定で定義したものを結果として返す
+                half4 customColor = half4(0.5, 0, 0, 1);
+                return customColor;
+            }
+
+            ENDHLSL
+        }
+    }
+}
+```){}
+
++p {
+
+このシェーダを自作の3Dモデル\footnote{皆様のお手元にある好きな3Dモデルを使ってください。}と地球儀\footnote{UnityでSphereのオブジェクトを作成して、地球儀のテクスチャを\url(`https://www.solarsystemscope.com/textures/`);などからダウンロードしてマテリアルに割り当てています。}の1つに適用したものが\figref(`toon00`);になります。
+
+}
+
++p {
+
+2つある地球儀の上側のものは、比較用にURPのデフォルトの Unlit シェーダのマテリアルを割り当ててあります。
+
+}
+
++figure(`toon00`)(10cm){}
+
++p {
+
+フラグメントシェーダに書いてあるとおり、固定色の暗い赤色で塗り潰されていますね。
+
+}
+
+
++p {
+
+こうしたシェーダコードは、 頂点シェーダ → フラグメントシェーダ の順で実行されます。
+
+}
+
++p {
+
+まず頂点シェーダは、3D モデルの各頂点で実行されるコードになります。その名の通り、頂点データに関する計算を行います。主に、空間ごとの頂点座標の変換をする処理を記述します。
+
+}
+
++p {
+
+次にフラグメントシェーダは、3D モデル表面のピクセルごとに実行されるコードになります。これもその名の通り、面のピクセルデータに関する計算を行います。主に、ライトや法線データ、テクスチャを参照してピクセルの色を決定する処理を記述します。
+
+}
+
++p {
+
+Tips
+
+\url(`https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl`);
+
+
+UnityObjectToClipPos() と同じ役割をする TransformObjectToHClip()
+
+変換系
+\url(`https://github.com/Unity-Technologies/Graphics/blob/339ba202a9fab54b5f67257d66f36eb87213fba7/com.unity.render-pipelines.universal/ShaderLibrary/ShaderVariablesFunctions.hlsl#L4`);
+
+ライト
+\url(`https://github.com/Unity-Technologies/Graphics/blob/a803690d88ec2a59f94092f43eebaf72138e8a1c/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl`);
+
+
+\url(`http://tips.hecomi.com/entry/2019/10/27/152520`);
+
+
+
+}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsubsection{座標空間}<
+
++p {
+
+オブジェクト空間 → ワールド空間 → ビュー空間 → クリップ空間 → スクリーン空間
+
+といった順番で座標の空間を変換していきます。
+
+}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{テクスチャを貼る (Toon01)}<
+
++p {
+
+では次に、3Dモデルにテクスチャを貼って、模様をつけられるようにしていきます。最初のシェーダからの変更点のdiffを切り分けたものを紹介しています。
+
+}
+
++code(`toon01.props`)(```
+ {
+     Properties
+-    { }
++    {
++        _BaseColor("BaseColor", Color) = (1,1,1,1)
++        _MainTex ("Lit (RGB)", 2D) = "white" {}
++    }
+```){}
+
++p {
+}
+
++code(`toon01.vars`)(```
+     SubShader
+     {
+@@ -16,31 +19,39 @@
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
++            uniform float4 _BaseColor;
++            uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
++
+```){}
+
++code(`toon01.attrs`)(```
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float2 texcoord0    : TEXCOORD0;
+             };
+```){}
+
++code(`toon01.vary`)(```
+             struct Varyings
+             {
+                 float4 positionHCS  : SV_POSITION;
++                float2 uv0          : TEXCOORD0;
+             };
+```){}
+
++code(`toon01.vert`)(```
+             Varyings vert(Attributes IN)
+             {
+-
+                 Varyings OUT;
+
+                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
++                OUT.uv0 = IN.texcoord0;
+
+                 return OUT;
+             }
+```){}
+
++code(`toon01.frag`)(```
+-            half4 frag() : SV_Target
++            half4 frag(Varyings IN) : SV_Target
+             {
+-                half4 customColor = half4(0.5, 0, 0, 1);
+-                return customColor;
++                float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
++                float4 mainColor = _BaseColor * mainTexColor;
++
++                return mainColor;
+             }
++
+             ENDHLSL
+         }
+     }
+```){}
+
++figure(`toon01`)(10cm){}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsubsection{UV座標 (Tangent space)}<
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{影をつける (Toon02)}<
+
++code(`toon02.props`)(```
+ {
+     Properties
+     {
+         _BaseColor("BaseColor", Color) = (1,1,1,1)
+         _MainTex ("Lit (RGB)", 2D) = "white" {}
++
++        [Header(Shadow)]
++        _ShadowTex("Shadow (RGB)", 2D) = "white" {}
++        _ShadowColor("ShadowColor", Color) = (1,1,1,1)
++        _ShadowGradation("ShadowGradation", Range(0, 1)) = 0.0
++        _ShadowShift("ShadowShift", Range(-1, 1)) = 0.0
+     }
+```){}
+
++code(`toon02.vars`)(```
+     SubShader
+@@ -18,13 +24,21 @@
+             #pragma fragment frag
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
++            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+             uniform float4 _BaseColor;
+             uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
+
++            uniform sampler2D _ShadowTex; uniform float4 _ShadowTex_ST;
++            uniform float4 _ShadowColor;
++            uniform float _ShadowGradation;
++            uniform float _ShadowShift;
++
+```){}
+
++code(`toon02.attrs`)(```
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float3 normalOS     : NORMAL; // OS = object space
++                float4 tangent      : TANGENT;
+                 float2 texcoord0    : TEXCOORD0;
+             };
+```){}
+
++code(`toon02.vary`)(```
+@@ -32,6 +46,7 @@
+             {
+                 float4 positionHCS  : SV_POSITION;
+                 float2 uv0          : TEXCOORD0;
++                float3 normalDirWS  : TEXCOORD1;
+             };
+```){}
+
++code(`toon02.vert`)(```
+             Varyings vert(Attributes IN)
+@@ -41,15 +56,30 @@
+                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                 OUT.uv0 = IN.texcoord0;
+
++                VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
++                OUT.normalDirWS = normalInput.normalWS;
++
+                 return OUT;
+             }
+```){}
+
++code(`toon02.frag`)(```
+             half4 frag(Varyings IN) : SV_Target
+             {
++                float3 normalDirWS = normalize(IN.normalDirWS);
++
++                Light light = GetMainLight();
++                float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
++
++                // 平行光源と法線の内積を取る。向きが同じほど1
++                float NdotL = dot(normalDirWS, lightDirWS);
++                float diffuse = max(0, smoothstep(_ShadowShift, _ShadowGradation + _ShadowShift, NdotL));
++
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+-                float4 mainColor = _BaseColor * mainTexColor;
++                float4 mainColor = diffuse * _BaseColor * mainTexColor;
++
++                float4 shadowColor = (1 - diffuse) * _ShadowColor;
+
+-                return mainColor;
++                float4 resultColor = mainColor + shadowColor;
++                return resultColor;
+             }
+
+             ENDHLSL
+```){}
+
++figure(`toon02`)(10cm){}
+
++figure(`toon02-50`)(10cm){}
+
++figure(`toon02-100`)(10cm){}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{リムライトの追加 (Toon03)}<
+
++code(`toon03.props`)(```
+ {
+     Properties
+     {
+@@ -10,6 +10,11 @@
+         _ShadowColor("ShadowColor", Color) = (1,1,1,1)
+         _ShadowGradation("ShadowGradation", Range(0, 1)) = 0.0
+         _ShadowShift("ShadowShift", Range(-1, 1)) = 0.0
++
++        [Header(Lim)]
++        _LimColor("LimColor", Color) = (1,1,1,1)
++        _LimForce("LimForce", Range(0, 1)) = 0.1
++        _LimGradation("LimGradation", Range(0, 1)) = 1
+     }
+```){}
+
++code(`toon03.vars`)(```
+     SubShader
+@@ -34,6 +39,10 @@
+             uniform float _ShadowGradation;
+             uniform float _ShadowShift;
++            uniform float4 _LimColor;
++            uniform float _LimForce;
++            uniform float _LimGradation;
++
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
+```){}
+
++code(`toon03.vary`)(```
+@@ -47,6 +56,7 @@
+                 float4 positionHCS  : SV_POSITION;
+                 float2 uv0          : TEXCOORD0;
+                 float3 normalDirWS  : TEXCOORD1;
++                float3 positionWS   : TEXCOORD2;
+             };
+```){}
+
++code(`toon03.vert`)(```
+             Varyings vert(Attributes IN)
+@@ -59,6 +69,9 @@
+                 VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
+                 OUT.normalDirWS = normalInput.normalWS;
+
++                VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS);
++                OUT.positionWS = p.positionWS;
++
+                 return OUT;
+             }
+```){}
+
++code(`toon03.frag`)(```
+@@ -69,16 +82,23 @@
+                 Light light = GetMainLight();
+                 float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
+
++                float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS); // vert -> camera
++
+                 // 平行光源と法線の内積を取る。向きが同じほど1
+                 float NdotL = dot(normalDirWS, lightDirWS);
+                 float diffuse = max(0, smoothstep(_ShadowShift, _ShadowGradation + _ShadowShift, NdotL));
+
++                // 法線と(頂点からカメラ向き)の内積を取る。向きが同じであるほど1。
++                float NdotC = dot(normalDirWS, vertToCameraDirWS);
++                float4 limStepedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
++                float4 limLightedColor = limStepedForce * _LimForce * _LimColor;
++
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+                 float4 mainColor = diffuse * _BaseColor * mainTexColor;
+
+                 float4 shadowColor = (1 - diffuse) * _ShadowColor;
+
+-                float4 resultColor = mainColor + shadowColor;
++                float4 resultColor = mainColor + shadowColor + limLightedColor;
+                 return resultColor;
+             }
+```){}
+
++figure(`toon03`)(10cm){}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
++subsection{アウトライン (Outline01)}<
+
++code(`outline01.props`)(```
+ {
+     Properties
+     {
+-        _BaseColor("BaseColor", Color) = (1,1,1,1)
+-        _MainTex ("Lit (RGB)", 2D) = "white" {}
+-    }
++        _MainTex ("Texture", 2D) = "white" {}
+
++        [Header(Outline)]
++        _OutlineWidth("OutlineWidth", Range(0, 10)) = 0.0
++        _OutlineColor("OutlineColor", Color) = (1,1,1,1)
++        _OutlineTex("Outline (RGB)", 2D) = "black" {}
++    }
+     SubShader
+     {
+         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+
+         Pass
+         {
++            Cull Front
++
+             HLSLPROGRAM
+
+             #pragma vertex vert
+             #pragma fragment frag
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
++            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+-            uniform float4 _BaseColor;
+             uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
+
++            uniform float _OutlineWidth;
++            uniform float4 _OutlineColor;
++            uniform sampler2D _OutlineTex;
++
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float3 normalOS     : NORMAL; // OS = object space
++                float4 tangentOS    : TANGENT;
+                 float2 texcoord0    : TEXCOORD0;
+             };
+
+@@ -36,18 +47,47 @@
+
+             Varyings vert(Attributes IN)
+             {
++                float4 positionCS = TransformObjectToHClip(IN.positionOS.xyz);
++
++                VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
++                // clip <- view <- world <- local
++                // xyz: normal, w: viewDir.x で w を使っているよう
++                // TransformObjectToHClip は w = 1.0 に決め打ちにするため、使うと壊れる
++                float3 normalCS = mul(GetWorldToHClipMatrix(), n.normalWS);
++
++                VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS);
++
++                // vert -> camera
++                float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - p.positionWS);
++
++                // "法線"と"頂点からカメラ向き"の内積を取る。向きが同じであるほど1
++                float NdotC = dot(normalize(n.normalWS), vertToCameraDirWS);
++                // カメラと法線がずれるほど1。曖昧な角度のエッジを出さない補正
++                float step = 1 - smoothstep(0.0, 1.0, NdotC);
++
++                float4 outlineTexColor = tex2Dlod(_OutlineTex, float4(TRANSFORM_TEX(IN.texcoord0, _MainTex), 0, 0));
++                // テクスチャの緑成分が太さの割合の減衰具合。緑が濃いほど線がなくなる
++                float outlineRatio = 1.0f - outlineTexColor.g;
++
++                // https://www.videopoetics.com/tutorials/pixel-perfect-outline-shaders-unity/
++                float2 offset = (normalize(normalCS.xy) / _ScreenParams.xy) * _OutlineWidth * positionCS.w * 2;
++
++                // OutLine
+                 Varyings OUT;
+
+-                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
++                OUT.positionHCS = positionCS;
++                OUT.positionHCS.xy += offset * outlineRatio * step;
++
+                 OUT.uv0 = IN.texcoord0;
+
+                 return OUT;
+             }
+
+             half4 frag(Varyings IN) : SV_Target
+             {
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+-                float4 mainColor = _BaseColor * mainTexColor;
++                float4 mainColor = _OutlineColor * mainTexColor;
+
+                 return mainColor;
+             }
+```){}
+
+
++figure(`multi-material`)(6cm){}
+
++figure(`outline`)(10cm){}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{完成}<
+
++p {
+
+ひとまずこのあたりで一旦完成としましょう。また、ここまでくれば物足りないなと思ってもシェーダに手を加えることができるようになっているはずです…！
+
+}
+
++p {
+
+影をテクスチャでいじることができるような手直しを少し行ったコードをリポジトリに含めておきました。完成図は\figref(`kanseizu`);になります。参考になれば幸いです。
+
+}
+
++figure(`kanseizu`)(10cm){}
+
+>
+>
+
+>
