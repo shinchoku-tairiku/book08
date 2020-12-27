@@ -344,12 +344,12 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 -      half4 frag() : SV_Target
 +      half4 frag(Varyings IN) : SV_Target
        {
--          half4 customColor = half4(0.5, 0, 0, 1);
--          return customColor;
-+          float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
-+          float4 mainColor = _BaseColor * mainTexColor;
+-        half4 customColor = half4(0.5, 0, 0, 1);
+-        return customColor;
++        float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
++        float4 mainColor = _BaseColor * mainTexColor;
 +
-+          return mainColor;
++        return mainColor;
        }
 +
        ENDHLSL
@@ -555,7 +555,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-\figref(`toon02smooth`); がその次の\code(`smoothstep`);関数\footnote{smoothstepのわかりやすい図 \url(`http://www.fundza.com/rman_shaders/smoothstep/index.html`);}の値を表しています。これにより、影のグラデーションの滑らかさを含めてdiffuse(反射光)\footnote{diffuseのわかりやすい図 \url(`https://ja.wikipedia.org/wiki/Phong%E3%81%AE%E5%8F%8D%E5%B0%84%E3%83%A2%E3%83%87%E3%83%AB`);}の強さを計算します。
+\figref(`toon02smooth`); がその次の\code(`smoothstep`);関数\footnote{smoothstepのわかりやすい図 \url(`http://www.fundza.com/rman_shaders/smoothstep/index.html`);}の値を表しています。これにより、影のグラデーションの滑らかさを含めてdiffuse(反射光)\footnote{diffuseのわかりやすい図 \urlt(`https://ja.wikipedia.org/wiki/Phong%E3%81%AE%E5%8F%8D%E5%B0%84%E3%83%A2%E3%83%87%E3%83%AB`){https://ja.wikipedia.org/wiki/Phongの反射モデル}}の強さを計算します。
 
 }
 

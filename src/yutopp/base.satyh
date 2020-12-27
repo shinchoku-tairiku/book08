@@ -11,3 +11,7 @@ let-block +figure label size caption = '<
 let-inline \ref label = {\ref(`yutopp:` ^ label);}
 let-inline \figref label = {図\ref(`figure:` ^ label);}
 let-inline \coderef label = {コード\ref(`code:` ^ label);}
+
+ let-inline ctx \urlt url title =
+   let ctx = Context.set-latin-font Config.font-mono ctx in
+   read-inline ctx {\href(url)(title);}
