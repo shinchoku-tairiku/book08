@@ -48,7 +48,7 @@ let-block +nomaddo = '<
       }
 
       +p {
-        そこで計算内容を計算環境に非依存のフォーマットとランタイムを分離し、
+        そこで計算内容を計算環境に非依存のフォーマットとランタイムに分離し、
         実行環境に合わせてランタイムが高速化するようなモデルが求められるわけです。
       }
 
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         +p {
           例えば筆者はSonyが開発しているNeural Network Consoleにonnxエキスポート機能があるので試してみたことがあるのですが、
           生成されたonnxファイルは規格違反の要素が含まれておりonnxruntimeがエラーを吐きました。
-          \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 治っているのか確認してはいません。}
+          \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 直っているのか確認してはいません。}
           私が試した時、この問題はResnetをエキスポートする中で発生しており、DLソフトウエアスタックを開発している身からしてこのような有力なモデルアーキテクチャ
           でエラーが発生するということはonnxまわりの出力結果について何も確認をしていないのだなと受け取りました。
           機能としては存在するけども対して実行確認されていない、という状態のソフトウエアは何も信頼できないと思っておいたほうが
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     +section?:(`nomaddo:for_onnx`){onnx所感}<
       +p {
         onnx自体ツラミの塊みたいなフォーマットです。
-        これは単にonnxをつかうだけのひとには関係がないことですが、面白いポイントだと思うのでまとめておきます。
+        これは単にonnxを使うだけの人には関係がないことですが、面白いポイントだと思うのでまとめておきます。
       }
 
       +subsection?:(`nomaddo:onnx_intersection`){この世すべての悪の集合体}<
@@ -234,8 +234,7 @@ if __name__ == '__main__':
 
         +p {
           例えばPaddingは画像に特定の値のピクセルを追加する処理ですが、
-          tensorflowはバージョンごとに挙動が異なり、
-          \footnote{ほんまキレそう。}、Pytorch・Chainerは追加しようとしている軸の
+          tensorflowはバージョンごとに挙動が異なり\footnote{ほんまキレそう。}、Pytorch・Chainerは追加しようとしている軸の
           両側にピクセルを追加します。
           そのため多くのonnxのオペレータの\code(`auto_pad`); 属性にはそれらをすべて表現するために \code(`NOTSET`);, \code(`SAME_UPPER`); , \code(`SAME_LOWER`);, \code(`VALID`); の値を取るようにできています。
           DLフレームワークの実装が進めば進むほど負の遺産がonnxの仕様に集まってくるという特性があります。
@@ -258,8 +257,8 @@ if __name__ == '__main__':
 
         +p {
           Pytorchの実装はだいぶ前にグラフの名前がC identifierになっておらず、
-          同僚が規格違反をIssueで連絡しているのですが\footnote{\url(`https://github.com/pytorch/pytorch/issues/30952`); }、
-          規格がなぜあるのか説いています。
+          同僚が規格違反をIssueで連絡していて、\footnote{\url(`https://github.com/pytorch/pytorch/issues/30952`); }、
+          そこで規格がなぜあるのか説いています。
         }
 
         +p {
