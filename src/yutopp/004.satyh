@@ -4,9 +4,10 @@ let-block +shader-kaku = '<
 +section{URPでトゥーンシェーダを書く}<
 
 +p {
+
 ここまでくれば、シェーダにまつわる周辺のパイプラインの事情と、シェーダの開発方法の雰囲気がなんとなく頭の中に入っていると思います。
 
-この章では上記のURP向けのトゥーンシェーダを書いていきます\footnote{正直なところ、`Built-in Render Pipeline`で全く困ることはない（資料も多い）のですが、ここでは今後を見越した勉強のため `URP` を選択しました。}。
+この節ではURP向けにターゲットを絞ってトゥーンシェーダを書いていきます\footnote{正直なところ、`Built-in Render Pipeline`で全く困ることはない（資料も多い）のですが、ここでは今後を見越した勉強のためURPを選択します。}。
 
 }
 
@@ -87,11 +88,11 @@ Shader "Example/URPUnlitShaderBasic"
         }
     }
 }
-```){一番基本的なURPのunlitシェーダの例}
+```){一番基本的なURPのUnlitシェーダの例}
 
 +p {
 
-\coderef(`toon00`);がおそらく最小のunlitシェーダの構造なので、順に説明していきます。まず、\emph{ShaderLab}の構文に従ってシェーダの構造を定義し、\emph{Pass}\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Pass.html`);}の中で\code(`HLSLPROGRAM`);と書くことでシェーダ本体のプログラムの\emph{HLSL}コードをスニペット\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-ShaderPrograms.html`);}として埋め込んでいます。
+\coderef(`toon00`);がおそらく最小のUnlitシェーダの構造なので、順に説明していきます。まず、\emph{ShaderLab}の構文に従ってシェーダの構造を定義し、\emph{Pass}\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Pass.html`);}の中で\code(`HLSLPROGRAM`);と書くことでシェーダ本体のプログラムの\emph{HLSL}コードをスニペット\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-ShaderPrograms.html`);}として埋め込んでいます。
 
 }
 
@@ -115,11 +116,11 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-大まかな構造はこれだけです。それでは、このシェーダを3Dキャラクタモデルと地球儀の1つのマテリアルに適用して、結果を確認してみましょう。レンダリング画面は\figref(`toon00`);になります。
+大まかな構造はこれだけです。それでは、このシェーダを3Dキャラクタモデルと地球儀の1つのマテリアルに適用して、結果を確認してみましょう。描画した画面は\figref(`toon00`);になります。
 
 }
 
-+figure(`toon00`)(10cm){unlitの最小のサンプルシェーダで描画した結果}
++figure(`toon00`)(10cm){Unlitの最小のサンプルシェーダで描画した結果}
 
 +p {
 
@@ -151,7 +152,7 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-読み替えの勘所としては、頻出する関数名の変換とラッパー関数の把握をしておくと楽そうでした。
+読み替えの勘所としては、頻出する関数名の変換とラッパー関数の把握をしておくと楽そうです。
 
 }
 
