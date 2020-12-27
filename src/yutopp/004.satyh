@@ -176,10 +176,23 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-オブジェクト空間 → ワールド空間 → ビュー空間 → クリップ空間 → スクリーン空間
+シェーダの描画では以下の順番で座標の空間を変換していきます。
 
-といった順番で座標の空間を変換していきます。
+}
 
++enumerate{
+
+* オブジェクト空間 (Object Space) ローカル空間、モデル空間とも呼ばれる
+* ワールド空間 (World Space)
+* ビュー空間 (View Space) カメラ空間とも呼ばれる
+* クリップ空間 (Clip Space)
+* 正規化デバイス座標系 (Normalized Device Coordinate)
+* スクリーン空間 (Screen Space) ウィンドウ空間とも呼ばれる
+
+}
+
++p {
+URPでは、値の意味する空間を示すsuffix(カッコの中の英語表記の短縮形)が変数や関数につけられています。
 }
 
 >
