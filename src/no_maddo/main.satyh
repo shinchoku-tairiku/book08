@@ -1,7 +1,19 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
 
+let-inline ctx \small-chapter-title it =
+  %% workaround: chapter のところだけ文字を指定の大きさにする
+  let length-equal l r = not (l <' r) && not (l >' r) in
+  let ctx =
+    %% chapter の元々の大きさは 30pt なのでその場合だけ大きさをいじる
+    if length-equal (get-font-size ctx) 30pt then
+      set-font-size 26pt ctx
+    else
+      ctx
+  in
+  read-inline ctx it
+
 let-block +nomaddo = '<
-  +chapter{ONNX: DL中間フォーマットという荒野}{もう疲れたよパトラッシュ}<
+  +chapter{\small-chapter-title{ONNX: DL中間フォーマットという荒野}}{もう疲れたよパトラッシュ}<
     +p {
         こんばんは、インターネットの闇\@no\_maddo です。普段は深層学習関連のソフトウエア開発やらコンパイラやらを作っています。
         皆さんは機械学習してますか？ してますよね？
