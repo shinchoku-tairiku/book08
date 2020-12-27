@@ -716,8 +716,8 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +        // 法線と(頂点からカメラ向き)の内積を取る。向きが同じであるほど1。
 +        float NdotC = dot(normalDirWS, vertToCameraDirWS);
-+        float4 limStepedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
-+        float4 limLightedColor = limStepedForce * _LimForce * _LimColor;
++        float4 limSteppedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
++        float4 limLightedColor = limSteppedForce * _LimForce * _LimColor;
 +
          float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
          float4 mainColor = diffuse * _BaseColor * mainTexColor;
