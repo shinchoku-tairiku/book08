@@ -146,7 +146,7 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-一方URPのドキュメントには、こうしたヘルパ関数の一覧などはありません。というわけで、困ったらURPライブラリのソースコードを読んでしまうのが手っ取り早そうでした…(URPのバージョンによる仕様変更には注意してください)。手元であれば、Unityプロジェクトの\code(`Library/PackageCache/com.unity.render-pipelines.universal@8.3.1/ShaderLibrary/`);以下のファイル、GitHub上であれば、\url(`https://github.com/Unity-Technologies/Graphics/tree/8.x.x/release/com.unity.render-pipelines.universal/ShaderLibrary`);以下のファイルが今回使っているライブラリコードです。
+一方URPのドキュメントには、こうしたヘルパ関数の一覧などはありません。というわけで、困ったらURPライブラリのソースコードを読んでしまうのが手っ取り早そうでした…(URPのバージョンによる仕様変更には注意してください)。手元であれば、Unityプロジェクトの\code(`Library/PackageCache/com.unity.render-pipelines.universal@8.3.1/ShaderLibrary/`);以下のファイルが今回使っているライブラリコードです。GitHub上\footnote{\url(`https://github.com/Unity-Technologies/Graphics/tree/8.x.x/release/com.unity.render-pipelines.universal/ShaderLibrary`);}でも確認することができます。
 
 }
 
@@ -158,7 +158,7 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-例えば、ビルトインの\code(`UnityObjectToClipPos`);という関数は、URPでは代わりに\code(`TransformObjectToHClip`);を用います。Unityというprefixが消えて、\code(`Transform[空間]To[空間]`);のようなルールになっており、似た変換関数がたくさん用意されています。
+例えば、ビルトインの\code(`UnityObjectToClipPos`);という関数は、URPでは代わりに\code(`TransformObjectToHClip`);を用います。Unityというprefixが消えて、\code(`Transform[空間]To[空間(+対象)]`);といった関数名に統一されており、似た変換関数がたくさん用意されています。
 
 }
 
