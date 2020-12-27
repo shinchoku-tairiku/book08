@@ -104,13 +104,13 @@ Shader "Example/URPUnlitShaderBasic"
 
 +p {
 
-まず\emph{頂点シェーダ}は、3Dモデルの各頂点で実行されるコードになります。その名の通り、頂点データに関する計算を行います。主に、空間ごとの頂点座標の変換をする処理を記述します。
+まず\emph{頂点シェーダ}は、3Dモデルの各頂点で実行されるプログラムになります。その名の通り、頂点データに関する計算を行います。主に、空間ごとの頂点座標の変換をする処理を記述します。
 
 }
 
 +p {
 
-次に\emph{フラグメントシェーダ}は、3D モデル表面のピクセルごとに実行されるコードになります。これもその名の通り、面のピクセルデータに関する計算を行います。主に、ライトや法線データ、テクスチャを参照してピクセルの色を決定する処理を記述します。
+次に\emph{フラグメントシェーダ}は、3D モデル表面のピクセルごとに実行されるプログラムになります。これもその名の通り、面のピクセルデータに関する計算を行います。主に、ライトや法線データ、テクスチャを参照してピクセルの色を決定する処理を記述します。
 
 }
 
@@ -251,7 +251,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-次にシェーダコード本体に入っていきます。\coderef(`toon01.vars`); では、\coderef(`toon01.props`); で定義したシェーダのプロパティをシェーダコードから参照しています。
+次にシェーダプログラム本体に入っていきます。\coderef(`toon01.vars`); では、\coderef(`toon01.props`); で定義したシェーダのプロパティをシェーダプログラムから参照しています。
 
 構文\footnote{Cg\/HLSLのシェーダプロパティに関する構文ドキュメント \url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-PropertiesInPrograms.html`);}は、\code(`uniform 型 変数名`);になります。\code(`uniform`);は必須ではないようです(がここでは書いておきます)。
 
@@ -477,7 +477,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-\coderef(`toon02.attrs`);では、フラグメントシェーダの入力として新たにワールド空間の法線ベクトルを追加しています。
+\coderef(`toon02.vary`);では、フラグメントシェーダの入力として新たにワールド空間の法線ベクトルを追加しています。
 
 }
 
@@ -487,7 +487,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
          OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
          OUT.uv0 = IN.texcoord0;
 
-+        VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
++        VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS);
 +        OUT.normalDirWS = normalInput.normalWS;
 +
          return OUT;
@@ -496,7 +496,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにした法線ベクトルから、ワールド空間の法線ベクトルを計算するようになりました。\code(`GetVertexNormalInputs`);は URPで提供されるようになったAPIです。
+\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにしたオブジェクト空間の法線ベクトルから、ワールド空間の法線ベクトルを計算するようになりました。\code(`GetVertexNormalInputs`);は URPで提供されるようになったAPIです。
 
 }
 
@@ -580,7 +580,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-ちなみに、\figref(`toon02-50`);と\figref(`toon02-100`);のように\code(`_ShadowGradation`);の値を変えることで、このように影の雰囲気が変わります。
+ちなみに、\figref(`toon02-50`);と\figref(`toon02-100`);のように\code(`_ShadowGradation`);の値を変えることで、このように影の雰囲気が変わります\footnote{キャラクタの髪が白くなっているのは、そもそも影の色の指定を明るいものにしているためです。分かりにくいので補足を…。}。
 
 }
 
@@ -687,7 +687,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 +code(`toon03.vert`)(```
        Varyings vert(Attributes IN)
 @@ -59,6 +69,9 @@
-         VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
+         VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS);
          OUT.normalDirWS = normalInput.normalWS;
 
 +        VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS);
@@ -708,7 +708,8 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
          Light light = GetMainLight();
          float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
 
-+        float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS); // vert -> camera
++        // 頂点(フラグメントシェーダなので実際は表面…)からカメラ方面
++        float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS);
 +
          // 平行光源と法線の内積を取る。向きが同じほど1
          float NdotL = dot(normalDirWS, lightDirWS);
@@ -716,8 +717,8 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +        // 法線と(頂点からカメラ向き)の内積を取る。向きが同じであるほど1。
 +        float NdotC = dot(normalDirWS, vertToCameraDirWS);
-+        float4 limStepedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
-+        float4 limLightedColor = limStepedForce * _LimForce * _LimColor;
++        float4 limSteppedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
++        float4 limLightedColor = limSteppedForce * _LimForce * _LimColor;
 +
          float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
          float4 mainColor = diffuse * _BaseColor * mainTexColor;
@@ -825,7 +826,6 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
        {
          float4 positionOS   : POSITION;
 +        float3 normalOS     : NORMAL; // OS = object space
-+        float4 tangentOS    : TANGENT;
          float2 texcoord0    : TEXCOORD0;
        };
 
@@ -835,7 +835,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
        {
 +        float4 positionCS = TransformObjectToHClip(IN.positionOS.xyz);
 +
-+        VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
++        VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS);
 +        // clip <- view <- world <- local
 +        // xyz: normal, w: viewDir.x で w を使っているよう
 +        // TransformObjectToHClip は w = 1.0 に決め打ちにするため、使うと壊れる
