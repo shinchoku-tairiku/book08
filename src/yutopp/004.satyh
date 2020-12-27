@@ -708,7 +708,8 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
          Light light = GetMainLight();
          float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
 
-+        float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS); // vert -> camera
++        // 頂点(フラグメントシェーダなので実際は表面…)からカメラ方面
++        float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS);
 +
          // 平行光源と法線の内積を取る。向きが同じほど1
          float NdotL = dot(normalDirWS, lightDirWS);
