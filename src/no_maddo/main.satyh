@@ -19,7 +19,7 @@ let-block +nomaddo = '<
        深層学習モデルは計算内容が下の図のように計算の連鎖が副作用のないグラフとして表現されます。\footnote{LSTMとか副作用のあるグラフもありますが……大体は副作用が無いです。}
       }
 
-      +figure?:(`nomaddo:fig1`)?:(3cm)(`./no_maddo/computation_graph.pdf`){計算をグラフとして表す}
+      +figure?:(`nomaddo:fig1`)?:(2.5cm)(`./no_maddo/computation_graph.pdf`){計算をグラフとして表す}
 
       +p {
         Pytorch・KerasなどPythonのDLフレームワークを使う・Neural Network Consoleなどのビジュアルエディタを用いる・AutoMLなどの自動モデル構築サービスを使うなど
