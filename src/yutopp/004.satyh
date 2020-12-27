@@ -825,7 +825,6 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
        {
          float4 positionOS   : POSITION;
 +        float3 normalOS     : NORMAL; // OS = object space
-+        float4 tangentOS    : TANGENT;
          float2 texcoord0    : TEXCOORD0;
        };
 
@@ -835,7 +834,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
        {
 +        float4 positionCS = TransformObjectToHClip(IN.positionOS.xyz);
 +
-+        VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
++        VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS);
 +        // clip <- view <- world <- local
 +        // xyz: normal, w: viewDir.x で w を使っているよう
 +        // TransformObjectToHClip は w = 1.0 に決め打ちにするため、使うと壊れる
