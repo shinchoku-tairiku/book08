@@ -15,6 +15,7 @@ let-inline ctx \small-chapter-title it =
 let-block +nomaddo = '<
   +chapter{\small-chapter-title{ONNX: DL中間フォーマットという荒野}}{もう疲れたよパトラッシュ}<
     +p {
+        こんばんは、インターネットの闇\@no\_maddo です。普段は深層学習関連のソフトウエア開発やらコンパイラやらを作っています。
         皆さんは機械学習してますか？ してますよね？
         特に今イケているナウでヤングな皆さんは深層学習モデルを取り扱っているかと思います。
         その中でONNX(オニキスと読む？)と呼ばれる深層学習モデルの計算グラフを扱うフォーマットについてつらつらと書いていきたいと思います。
@@ -31,7 +32,7 @@ let-block +nomaddo = '<
        深層学習モデルは計算内容が下の図のように計算の連鎖が副作用のないグラフとして表現されます。\footnote{LSTMとか副作用のあるグラフもありますが……大体は副作用が無いです。}
       }
 
-      +figure?:(`nomaddo:fig1`)?:(3cm)(`./no_maddo/computation_graph.pdf`){計算をグラフとして表す}
+      +figure?:(`nomaddo:fig1`)?:(2.5cm)(`./no_maddo/computation_graph.pdf`){計算をグラフとして表す}
 
       +p {
         Pytorch・KerasなどPythonのDLフレームワークを使う・Neural Network Consoleなどのビジュアルエディタを用いる・AutoMLなどの自動モデル構築サービスを使うなど
@@ -42,7 +43,7 @@ let-block +nomaddo = '<
       +p {
         無論学習方法などはフレームワークごとに異なるのは普通だと思いますが、
         学習が終わったモデルとそのパラメータは学習に用いたフレームワークに非依存
-        にしたいはずです。Pythonで書かれたプログラムを学習に用いても、
+        にしたいはずです\footnote{機械学習のステップとしては、一般的に事前に"学習"と呼ばれるパラメータを探索するステップがあり、その後そのパラメータを用いて"推論"と呼ばれるパラメータを固定して結果を得る計算を行います。}。Pythonで書かれたプログラムを学習に用いても、
         動かしたい環境は多岐に渡ります。
       }
 
@@ -60,7 +61,7 @@ let-block +nomaddo = '<
       }
 
       +p {
-        そこで計算内容を計算環境に非依存のフォーマットとランタイムを分離し、
+        そこで計算内容を計算環境に非依存のフォーマットとランタイムに分離し、
         実行環境に合わせてランタイムが高速化するようなモデルが求められるわけです。
       }
 
@@ -190,7 +191,7 @@ if __name__ == '__main__':
         +p {
           例えば筆者はSonyが開発しているNeural Network Consoleにonnxエキスポート機能があるので試してみたことがあるのですが、
           生成されたonnxファイルは規格違反の要素が含まれておりonnxruntimeがエラーを吐きました。
-          \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 治っているのか確認してはいません。}
+          \footnote{\url(`https://groups.google.com/g/neural_network_console_users_jp/c/Jxb5jG1Ntnw/m/S9I1K_x5AwAJ?pli=1`); 直っているのか確認してはいません。}
           私が試した時、この問題はResnetをエキスポートする中で発生しており、DLソフトウエアスタックを開発している身からしてこのような有力なモデルアーキテクチャ
           でエラーが発生するということはonnxまわりの出力結果について何も確認をしていないのだなと受け取りました。
           機能としては存在するけども対して実行確認されていない、という状態のソフトウエアは何も信頼できないと思っておいたほうが
@@ -234,7 +235,7 @@ if __name__ == '__main__':
     +section?:(`nomaddo:for_onnx`){onnx所感}<
       +p {
         onnx自体ツラミの塊みたいなフォーマットです。
-        これは単にonnxをつかうだけのひとには関係がないことですが、面白いポイントだと思うのでまとめておきます。
+        これは単にonnxを使うだけの人には関係がないことですが、面白いポイントだと思うのでまとめておきます。
       }
 
       +subsection?:(`nomaddo:onnx_intersection`){この世すべての悪の集合体}<
@@ -246,8 +247,7 @@ if __name__ == '__main__':
 
         +p {
           例えばPaddingは画像に特定の値のピクセルを追加する処理ですが、
-          tensorflowはバージョンごとに挙動が異なり、
-          \footnote{ほんまキレそう。}、Pytorch・Chainerは追加しようとしている軸の
+          tensorflowはバージョンごとに挙動が異なり\footnote{ほんまキレそう。}、Pytorch・Chainerは追加しようとしている軸の
           両側にピクセルを追加します。
           そのため多くのonnxのオペレータの\code(`auto_pad`); 属性にはそれらをすべて表現するために \code(`NOTSET`);, \code(`SAME_UPPER`); , \code(`SAME_LOWER`);, \code(`VALID`); の値を取るようにできています。
           DLフレームワークの実装が進めば進むほど負の遺産がonnxの仕様に集まってくるという特性があります。
@@ -270,8 +270,8 @@ if __name__ == '__main__':
 
         +p {
           Pytorchの実装はだいぶ前にグラフの名前がC identifierになっておらず、
-          同僚が規格違反をIssueで連絡しているのですが\footnote{\url(`https://github.com/pytorch/pytorch/issues/30952`); }、
-          規格がなぜあるのか説いています。
+          同僚が規格違反をIssueで連絡していて、\footnote{\url(`https://github.com/pytorch/pytorch/issues/30952`); }、
+          そこで規格がなぜあるのか説いています。
         }
 
         +p {
