@@ -1,7 +1,7 @@
 @import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
 
 let-block +nomaddo = '<
-  +chapter{ONNX: DL中間フォーマットという荒野}{もう疲れたよパトラッシュ}<
+  +chapter{ONNXという荒野}{もう疲れたよパトラッシュ}<
     +p {
         皆さんは機械学習してますか？ してますよね？
         特に今イケているナウでヤングな皆さんは深層学習モデルを取り扱っているかと思います。
