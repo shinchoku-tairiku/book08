@@ -23,7 +23,7 @@ let-block +materi = '<
 
 }
 
-+figure(`defo`)(6cm){自前の3Dキャラクタモデルと地球儀モデル2つ}
++figure(`defo`)(6cm){某を参考に作った自作の3Dキャラクタモデルと地球儀モデル2つ}
 
 +p {
 
