@@ -496,7 +496,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 +p {
 
-\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにした法線ベクトルから、ワールド空間の法線ベクトルを計算するようになりました。\code(`GetVertexNormalInputs`);は URPで提供されるようになったAPIです。
+\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにしたオブジェクト空間の法線ベクトルから、ワールド空間の法線ベクトルを計算するようになりました。\code(`GetVertexNormalInputs`);は URPで提供されるようになったAPIです。
 
 }
 
