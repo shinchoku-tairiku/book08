@@ -1,0 +1,100 @@
+@import: base
+
+let-block +shader-kaku-sonomaeni = '<
++section{シェーダを書く、その前に}<
+
++p {
+
+それではシェーダを書いていきます！　…とその前に、Unityでのシェーダの開発方法とタイトルに出てくるURPとは何かという話をします。
+
+}
+
++p {
+
+UnityではシェーダをShaderLabという言語で記述し、その一部でHLSLを利用してシェーダ本体のロジックを実装します\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-ShadingLanguage.html`);}。
+
+Unityが提供するマクロや関数などを駆使し、プラットフォーム依存にならないようHLSLを記述することで、ビルドターゲットの各プラットフォームで利用される実際のシェーダコードへ変換が行われるようです\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Reference.html`);}。
+
+}
+
++p {
+
+しかし、シェーダだけ準備したとしても、画面に描画するためにはUnityからシェーダコードを呼び出して貰わなければなりません。
+
+}
+
++p {
+
+そのためには、レンダリングパイプラインの仕組みについて軽く知っておく必要があります。
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{Unityのレンダリングパイプライン}<
+
++p {
+
+レンダリングパイプラインとは、シーンの情報(3Dモデルやライトなど)から画面を描画にする一連の処理のことを指します。この一連の中でシェーダコードが呼び出されるというわけですね。
+
+}
+
++p {
+
+そして現在、このレンダリングパイプラインが複数存在します。Unityは以下のレンダリングパイプラインを提供しています。
+
+}
+
++listing {
+  * Built-in Render Pipeline
+  * Scriptable Render Pipeline (SRP)
+    ** Universal Render Pipeline (URP) [旧LWRP]
+    ** High Definition Render Pipeline (HDRP)
+}
+
++p {
+
+これらのレンダリングパイプライン同士には互換性がありません\footnote{シェーダ内で使える機能が異なるそう}。レンダリングパイプラインを切り替える場合は、シェーダもそのパイプラインに対応している必要があります\footnote{書き換えが必要な例…　\url(`https://forum.unity.com/threads/urp-custom-shader-not-receiving-shadows.782510/`);}。
+
+}
+
++p {
+
+そのため、開発を始める前にどのレンダリングパイプラインを用いるかということを慎重に選択しておく必要があります。
+
+}
+
++subsubsection{Built-in Render Pipeline}<
+
++p {
+
+`Built-in Render Pipeline` は、Unity組み込みのデフォルトのレンダリングパイプラインです。いまインターネット上で公開されており特に断りがないUnityのシェーダは、このパイプライン用に記載されているものが大半です。
+
+}
+
++p {
+
+これは最も汎用なパイプラインで、これまで書かれてきたシェーダの資産もそのまま使うことができます。しかし、組み込みであるためパイプラインそのもののカスタマイズ方法は限られてしまいます。
+}
+
+>
+
++subsubsection{Scriptable Render Pipeline (SRP)}<
+
++p {
+一方 `Scriptable Render Pipeline (SRP)` は、新しくUnity 2018.1 beta から提供された、カスタム可能なレンダリングパイプラインです。
+レンダリングパイプラインの内部では様々な処理が行われますが、それらをスクリプトで自由に構築できるようにすることで、最適化や目的や性能に合わせての処理の取捨選択を行えます。そのため、プラットフォームごとに受難なパフォーマンスの調整が可能になるとのことです。
+}
+
++p {
+Unityが提供する構築済みのSRPは2つあります\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/render-pipelines.html`);}。モバイルからハイエンドまでの幅広いプラットフォーム向けに最適化された`Universal Render Pipeline (URP)` と、高性能なプラットフォーム向けの高い表現力を持つ`High Definition Render Pipeline (HDRP)`です。
+
+}
+
+>
+
+>
+
+>
+
+>

@@ -1,0 +1,933 @@
+@import: base
+
+let-block +shader-kaku = '<
++section{URPでトゥーンシェーダを書く}<
+
++p {
+ここまでくれば、シェーダにまつわる周辺のパイプラインの事情と、シェーダの開発方法の雰囲気がなんとなく頭の中に入っていると思います。
+
+この章では上記のURP向けのトゥーンシェーダを書いていきます\footnote{正直なところ、`Built-in Render Pipeline`で全く困ることはない（資料も多い）のですが、ここでは今後を見越した勉強のため `URP` を選択しました。}。
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{基本のシェーダの構造を掴む}<
+
++p {
+
+それではまず、URPの基本的なunlit\footnote{ライティングなしという意味}シェーダのサンプル\footnote{\url(`https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@8.3/manual/writing-shaders-urp-basic-unlit-structure.html`);}を引用しながら、コードの構造を追っていきましょう (コメントは書き換えています)。
+
+}
+
++code(`toon00`)(```
+// ShaderLabコード。Shaderの名前は"Example/URPUnlitShaderBasic"
+Shader "Example/URPUnlitShaderBasic"
+{
+    // Unityから受け取るパラメータを指定する場所。この例では空
+    Properties
+    { }
+
+    // Shader本体を記述する場所
+    SubShader
+    {
+        // このSubShaderのレンダリングパイプラインにURPを利用するという指定
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+
+        Pass
+        {
+            // HLSLコードブロックの開始
+            HLSLPROGRAM
+
+            // 頂点シェーダの名前を 'vert' と定義
+            #pragma vertex vert
+            // フラグメントシェーダの名前を 'frag' と定義
+            #pragma fragment frag
+
+            // URPパッケージに含まれる便利マクロや関数などを読み込む
+            // このパッケージのディレクトリ以下には他にも様々なライブラリが提供されている。
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            // この例では 'Attributes' 構造体を頂点シェーダの入力として使う
+            struct Attributes
+            {
+                // 'positionOS' 変数はオブジェクト空間の頂点座標を持つ
+                float4 positionOS   : POSITION;
+            };
+
+            // 頂点シェーダの出力 (フラグメントシェーダの入力としても使える)
+            struct Varyings
+            {
+                // クリップ空間の頂点座標をこの構造体では持っている必要がある
+                // SV_POSITION というセマンティクスを指定する (後述)
+                float4 positionHCS  : SV_POSITION;
+            };
+
+            // 頂点シェーダの定義。上記の 'Varyings' 構造体で定義されたプロパティを埋める
+            Varyings vert(Attributes IN)
+            {
+                // Varyings構造体で出力データの (OUT)を宣言
+                Varyings OUT;
+                // TransformObjectToHClip関数で、頂点座標をオブジェクト空間からクリップ空間に変換
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                // 出力を返す
+                return OUT;
+            }
+
+            // フラグメントシェーダの定義
+            // SV_Targetというセマンティクスを指定し、half4型の値を返す (後述)
+            half4 frag() : SV_Target
+            {
+                // 色を固定で定義したものを結果として返す
+                half4 customColor = half4(0.5, 0, 0, 1);
+                return customColor;
+            }
+
+            ENDHLSL
+        }
+    }
+}
+```){一番基本的なURPのunlitシェーダの例}
+
++p {
+
+\coderef(`toon00`);がおそらく最小のunlitシェーダの構造なので、順に説明していきます。まず、ShaderLabの構文に従ってシェーダの構造を定義し、Pass\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-Pass.html`);}の中でHLSLPROGRAMと書くことでシェーダ本体のプログラムのHLSLコードをスニペット\footnote{\url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-ShaderPrograms.html`);}として埋め込んでいます。
+
+}
+
++p {
+
+シェーダ本体のプログラムの中には、いくつかのコンパイラディレクティブと型定義、として頂点シェーダとフラグメントシェーダが含まれています。各シェーダプログラムは、 頂点シェーダ → フラグメントシェーダ の順で実行されます。
+
+}
+
++p {
+
+まず頂点シェーダは、3D モデルの各頂点で実行されるコードになります。その名の通り、頂点データに関する計算を行います。主に、空間ごとの頂点座標の変換をする処理を記述します。
+
+}
+
++p {
+
+次にフラグメントシェーダは、3D モデル表面のピクセルごとに実行されるコードになります。これもその名の通り、面のピクセルデータに関する計算を行います。主に、ライトや法線データ、テクスチャを参照してピクセルの色を決定する処理を記述します。
+
+}
+
++p {
+
+大まかな構造はこれだけです。それでは、このシェーダを3Dキャラクタモデルと地球儀の1つのマテリアルに適用して、結果を確認してみましょう。レンダリング画面は\figref(`toon00`);になります。
+
+}
+
++figure(`toon00`)(10cm){unlitの最小のサンプルシェーダで描画した結果}
+
++p {
+
+フラグメントシェーダに書いてあるとおり、固定色の暗い赤色で塗り潰されていますね。
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++column{既存のシェーダとURP用シェーダの違いで困ったら}<
+
++p {
+
+既存のシェーダを読んでURPのシェーダに書き換えようとすると、構造は同じでも使われている関数がガラっと変わっていて困ることがあります。
+
+}
+
++p {
+
+まず、Unityの既存のシェーダではよく\code(`#include "UnityCG.cginc"`);という表記を見かけます。これはビルトインのヘルパ関数群\footnote{\url(`https://docs.unity3d.com/ja/2019.4/Manual/SL-BuiltinIncludes.html`);}なのですが、URPのシェーダでは直接このファイルをincludeしていません。
+
+}
+
++p {
+
+一方URPのドキュメントには、こうしたヘルパ関数の一覧などはありません。というわけで、困ったらURPライブラリのソースコードを読んでしまうのが手っ取り早そうでした…(URPのバージョンによる仕様変更には注意してください)。手元であれば、Unityプロジェクトの\code(`Library/PackageCache/com.unity.render-pipelines.universal@8.3.1/ShaderLibrary/`);以下のファイル、GitHub上であれば、\url(`https://github.com/Unity-Technologies/Graphics/tree/8.x.x/release/com.unity.render-pipelines.universal/ShaderLibrary`);以下のファイルが今回使っているライブラリコードです。
+
+}
+
++p {
+
+読み替えの勘所としては、頻出する関数名の変換とラッパー関数の把握をしておくと楽そうでした。
+
+}
+
++p {
+
+例えば、ビルトインのUnityObjectToClipPosという関数は、URPでは代わりにTransformObjectToHClipを用います。Unityというprefixが消えて、Transform[空間]To[空間]のようなルールになっており、似た変換関数がたくさん用意されています。
+
+}
+
++p {
+
+他には、既存シェーダでは逐一書いて行っていた座標変換ロジックについても、URPではラッパー関数で一括で変換しています。頂点や法線の座標変換もGetVertexPositionInputsやGetVertexNormalInputsという関数に置き換えていることが多いです。
+
+}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++column{座標空間}<
+
++p {
+
+オブジェクト空間 → ワールド空間 → ビュー空間 → クリップ空間 → スクリーン空間
+
+といった順番で座標の空間を変換していきます。
+
+}
+
+>
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{テクスチャを貼る (Toon01)}<
+
++p {
+
+最初のシェーダではモデルが単色で塗りつぶされていました。それではもの悲しいので、次に3Dモデルにテクスチャを貼って模様を描画できるようにしていきましょう。最初のシェーダからの変更点をdiff形式で切り分けたものを紹介しています。
+
+}
+
++code(`toon01.props`)(```
+ {
+     Properties
+-    { }
++    {
++        _BaseColor ("BaseColor", Color) = (1,1,1,1)
++        _MainTex ("Lit (RGB)", 2D) = "white" {}
++    }
+```){toon01: プロパティ}
+
++p {
+
+\coderef(`toon01.props`); では、シェーダのプロパティを2つ追加しています。_BaseColorと_MainTexですね。
+
+}
+
++p {
+
+構文\footnote{ShaderLabのプロパティに関する構文ドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-Properties.html`);}は、\code(`名前 ("表示名", 型) = デフォルト値`);になります。また、変数名は_から始めるのがUnityでは一般的なようです。
+
+}
+
++p {
+
+それを踏まえると、1つ目のプロパティの名前は _BaseColor で、エディタには "BaseColor" と表示され、型はColor、デフォルト値は (1,1,1,1) で真っ白、ということです。2つ目のプロパティの名前は _MainTex、エディタには "Lit (RGB)" と表示され、型は2D (2Dテクスチャ)、デフォルト値は "white" \{\} で白一色のプリセット\footnote{このプリセットは構文のドキュメントでも紹介されており、"white"の他には"black"、"gray"、"bump"、"red"があります。}、ですね。
+
+}
+
++code(`toon01.vars`)(```
+     SubShader
+     {
+@@ -16,31 +19,39 @@
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
++            uniform float4 _BaseColor;
++            uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
++
+```){toon01: シェーダプログラム内のプロパティ変数}
+
++p {
+
+次にシェーダコード本体に入っていきます。\coderef(`toon01.vars`); では、\coderef(`toon01.props`); で定義したシェーダのプロパティをシェーダコードから参照しています。
+
+構文\footnote{Cg\/HLSLのシェーダプロパティに関する構文ドキュメント \url(`https://docs.unity3d.com/ja/2020.1/Manual/SL-PropertiesInPrograms.html`);}は、\code(`uniform 型 変数名`);になります。uniformは必須ではないようです(がここでは書いておきます)。
+
+}
+
++p {
+
+プロパティは基本的に\coderef(`toon01.props`);のシェーダのプロパティで定義したものと同名のものを参照します。型名が異なっているのでその点について説明すると、シェーダのプロパティ_BaseColorで指定していたColor型は、Cg/HLSLではfloat4 or (half4 or fixed4)型にマッピングされます。_MainTexの2D型は、sampler2D型へマッピングされます。
+
+}
+
++p {
+一つfloat4型で_MainTex_STという見覚えのない変数がありますね。テクスチャ名_STのような命名規則でプロパティを参照してるのですが、これはUnityの特別なテクスチャプロパティで、このプロパティでは対応するテクスチャ名のタイリングとオフセット情報をUntiyが勝手に渡してくれます。他にもいくつかあるので、詳細は紹介しているドキュメントを参照してください。
+}
+
++code(`toon01.attrs`)(```
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float2 texcoord0    : TEXCOORD0;
+             };
+```){toon01: 頂点シェーダの入力}
+
++p {
+\coderef(`toon01.attrs`);では頂点シェーダの入力である構造体に1つフィールドを追加しています。texcoord0という名前でTEXCOORD0というシェーダのセマンティクスの指定がついています。
+}
+
++p {
+
+説明を省いていましたが、シェーダの入出力にはそれらの値がどのような意図をもっているのかということを知らせる指定をつけてあげる必要があり、これをシェーダのセマンティクスと呼びます。POSITIONやTEXCOORD0はセマンティクスの指定だったわけですね。
+
+}
+
++p {
+
+Attributesは頂点シェーダの入力で用いるので、頂点シェーダ入力セマンティクス\footnote{シェーダーセマンティクスのドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-ShaderSemantics.html`);}で定義されている通りに、それぞれのセマンティクスに対応したデータが渡されてきます。POSITIONは頂点位置、TEXCOORD0は1つ目のUV座標になります。その他のセマンティクスについては、ドキュメント\footnote{頂点シェーダへの頂点データの渡し方のドキュメント \url(`https://docs.unity3d.com/2020.1/Documentation/Manual/SL-VertexProgramInputs.html`);}も参照にしてみてください。
+}
+
++code(`toon01.vary`)(```
+             struct Varyings
+             {
+                 float4 positionHCS  : SV_POSITION;
++                float2 uv0          : TEXCOORD0;
+             };
+```){toon01: 頂点シェーダの出力}
+
++p {
+
+\coderef(`toon01.vary`);では、頂点シェーダの出力でありフラグメントシェーダの入力でもある構造体に1つフィールドを追加しています。uv0という名前でTEXCOORD0というセマンティクス指定がついています。
+
+}
+
++p {
+
+こちらも説明を省いていましたが、頂点シェーダの出力は最終的な頂点のクリップ空間の座標を出力する必要があります。つまり、これが最初からあるSV_POSITIONセマンティクス指定だったというわけです。
+
+}
+
++p {
+
+一方、今回追加したuv0のようなSV_POSITIONセマンティクス以外をどうするかについては、シェーダ作者の自由となります。公式ドキュメント曰くベストプラクティスとしてはTEXCOORDnとして連番をつけていけば良いとのことなので、まずTEXCOORD0から指定しています。
+
+}
+
++p {
+
+この今回作るトゥーンシェーダでは、uv0にはただの頂点のuv情報を入れておきます。
+
+}
+
++code(`toon01.vert`)(```
+             Varyings vert(Attributes IN)
+             {
+                 Varyings OUT;
+
+                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
++                OUT.uv0 = IN.texcoord0;
+
+                 return OUT;
+             }
+```){toon01: 頂点シェーダ本体}
+
++p {
+
+ようやく\coderef(`toon01.vert`);の頂点シェーダ本体まで来ましたね…。ここは単純で、入力のUV座標を出力にも含めるような変更を加えただけになります。
+
+}
+
++code(`toon01.frag`)(```
+-            half4 frag() : SV_Target
++            half4 frag(Varyings IN) : SV_Target
+             {
+-                half4 customColor = half4(0.5, 0, 0, 1);
+-                return customColor;
++                float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
++                float4 mainColor = _BaseColor * mainTexColor;
++
++                return mainColor;
+             }
++
+             ENDHLSL
+         }
+     }
+```){toon01: フラグメントシェーダ本体}
+
++p {
+
+さて最後は\coderef(`toon01.frag`);のフラグメントシェーダ本体です。まず初めに引数で頂点シェーダの出力であるVaryings型の値を受け取るように変更しています。これで頂点シェーダの結果をフラグメントシェーダで用いることができます。
+
+}
+
++p {
+
+引数の変更の前に、フラグメントシェーダのSV_Targetが気になっていた方もいると思います。こちらも説明を省いていましたが、これもセマンティクスの1つで、フラグメントシェーダ出力セマンティクスで定義されているとおり色を出力とするフラグメントシェーダという意味になります。この場合戻り値の型はhalf4である必要があります。
+
+}
+
++p {
+
+話を戻しますと、コード中の tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex)) にてテクスチャのuvに対応する部分の色を取得します。TRANSFORM_TEX は _MainTex_ST を参照してタイリングとオフセットの計算をしてくれます。
+
+}
+
++p {
+
+次の行で上記のテクスチャの色と_BaseColorを乗算\footnote{色味をパラメータから変更する用途で用いる}し、その結果をフラグメントシェーダの計算結果としています。
+
+}
+
++p {
+それでは、上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう(\figref(`toon01`);)。
+}
+
++figure(`toon01`)(10cm){テクスチャ描画を実装したシェーダで描画した結果}
+
++p {
+
+テクスチャの内容が反映されて模様がつきましたね。やったぜ。
+
+}
+
+>
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{影をつける (Toon02)}<
+
++p {
+
+次は影をつけていきましょう。影が入ると一気に細部の見栄えが良くなるように感じるので重要です。
+
+}
+
++code(`toon02.props`)(```
+ {
+     Properties
+     {
+         _BaseColor("BaseColor", Color) = (1,1,1,1)
+         _MainTex ("Lit (RGB)", 2D) = "white" {}
++
++        [Header(Shadow)]
++        _ShadowTex("Shadow (RGB)", 2D) = "white" {}
++        _ShadowColor("ShadowColor", Color) = (1,1,1,1)
++        _ShadowGradation("ShadowGradation", Range(0, 1)) = 0.0
++        _ShadowShift("ShadowShift", Range(-1, 1)) = 0.0
+     }
+```){toon02: プロパティ}
+
++p {
+
+\coderef(`toon02.props`);では、影を出す用のパラメータをいくつか追加します。
+
+}
+
++code(`toon02.vars`)(```
+     SubShader
+@@ -18,13 +24,21 @@
+             #pragma fragment frag
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
++            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+             uniform float4 _BaseColor;
+             uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
+
++            uniform sampler2D _ShadowTex; uniform float4 _ShadowTex_ST;
++            uniform float4 _ShadowColor;
++            uniform float _ShadowGradation;
++            uniform float _ShadowShift;
++
+```){toon02: シェーダプログラム内のincludeとプロパティ変数}
+
++p {
+
+\coderef(`toon02.vars`);では、ライトを扱うことのできるライブラリコードの新規読み込みと、\coderef(`toon02.props`);で追加したパラメータをシェーダから参照できるようにしています。
+
+}
+
++code(`toon02.attrs`)(```
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float3 normalOS     : NORMAL; // OS = object space
+                 float2 texcoord0    : TEXCOORD0;
+             };
+```){toon02: 頂点シェーダの入力}
+
++p {
+
+\coderef(`toon02.attrs`);では、頂点シェーダの引数として新たに法線ベクトル(normal)を受け取るように変更しています。
+
+}
+
++code(`toon02.vary`)(```
+@@ -32,6 +46,7 @@
+             {
+                 float4 positionHCS  : SV_POSITION;
+                 float2 uv0          : TEXCOORD0;
++                float3 normalDirWS  : TEXCOORD1;
+             };
+```){toon02: フラグメントシェーダの入力(頂点シェーダの出力)}
+
++p {
+
+\coderef(`toon02.attrs`);では、フラグメントシェーダの入力として新たにワールド空間の法線ベクトルを追加しています。
+
+}
+
++code(`toon02.vert`)(```
+             Varyings vert(Attributes IN)
+@@ -41,15 +56,30 @@
+                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                 OUT.uv0 = IN.texcoord0;
+
++                VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
++                OUT.normalDirWS = normalInput.normalWS;
++
+                 return OUT;
+             }
+```){toon02: 頂点シェーダ本体}
+
++p {
+
+\coderef(`toon02.vert`);の頂点シェーダでは、新しく受け取るようにした法線ベクトルから、ワールド空間の法線ベクトルを計算するようになりました。GetVertexNormalInputs は URPで提供されるようになったAPIです。
+
+}
+
++code(`toon02.frag`)(```
+             half4 frag(Varyings IN) : SV_Target
+             {
++                float3 normalDirWS = normalize(IN.normalDirWS);
++
++                Light light = GetMainLight();
++                float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
++
+```){toon02: フラグメントシェーダ本体、先頭部分}
+
++p {
+
+\coderef(`toon02.frag`);のフラグメントシェーダの先頭部分です。原点からライト方向へのベクトルを計算し(ワールド空間)、正規化しています。
+
+}
+
++code(`toon02.frag2`)(```
++                // 平行光源と法線の内積を取る。向きが同じほど1
++                float NdotL = dot(normalDirWS, lightDirWS);
++                float diffuse = max(0, smoothstep(_ShadowShift, _ShadowGradation + _ShadowShift, NdotL));
++
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+-                float4 mainColor = _BaseColor * mainTexColor;
++                float4 mainColor = diffuse * _BaseColor * mainTexColor;
++
++                float4 shadowColor = (1 - diffuse) * _ShadowColor;
+
+-                return mainColor;
++                float4 resultColor = mainColor + shadowColor;
++                return resultColor;
+             }
+
+             ENDHLSL
+```){toon02: フラグメントシェーダ本体、残り部分}
+
++p {
+
+\coderef(`toon02.frag2`);のフラグメントシェーダの残り部分です。原点からライト方向へのベクトル(平行光源であるため)と、モデルの法線ベクトルの内積を計算しています。
+
+この場合、モデルの法線ベクトルと原点からライト方向へのベクトルが一致しているほど1に、一致していないほど-1になります。例として、\code(`return half4(NdotL, NdotL, NdotL, 1.0);`); といったコードをdiffuseの定義の直後に入れてみると、\figref(`toon02ndot`);のようになります。
+
+}
+
++figure(`toon02ndot`)(5cm){ライト方面のベクトルと法線ベクトルの一致具合}
+
++p {
+
+ライト(このシーンでは右上の方にあります)の方を向いている面ほど明るく、そうでないほど暗くなっていることから、意図通りの値が取れていそうなことが分かりますね\footnote{しばしばこのような方法で計算結果が合っているかのデバッグをしたりします…。}。
+
+}
+
++figure(`toon02smooth`)(6cm){smoothstepの出力}
+
++p {
+
+\figref(`toon02smooth`); がその次のsmoothstep関数\footnote{わかりやすい図 \url(`http://www.fundza.com/rman_shaders/smoothstep/index.html`);}の値を表しています。これにより、影のグラデーションの滑らかさを含めてdiffuse(反射光)\footnote{図がわかりやすい \url(`https://ja.wikipedia.org/wiki/Phong%E3%81%AE%E5%8F%8D%E5%B0%84%E3%83%A2%E3%83%87%E3%83%AB`);}の強さを計算します。
+
+}
+
++p {
+
+最後に、diffuseの比率を用いて明るい部分はこれまで通りの色、暗い部分は影の色を計算し、それを加算した値を最終的な色とします。それでは、再び上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう(\figref(`toon02`);)。
+
+}
+
++figure(`toon02`)(10cm){影を実装したシェーダで描画した結果}
+
++p {
+
+うっすらと影が出ていますね。良さそうです。
+
+}
+
++row{
+| \minipage(0.5)<+figure(`toon02-50`)(7cm){_ShadowGradation = 50}>
+| \minipage(0.5)<+figure(`toon02-100`)(7cm){_ShadowGradation = 100}>
+|}
+
++p {
+
+ちなみに、\figref(`toon02-50`);と\figref(`toon02-100`);のように_ShadowGradationの値を変えることで、このように影の雰囲気が変わります。
+
+}
+
++column{コラム: 法線と接空間}<
+
++p {
+
+この節では法線のみを受け取っていましたが、将来的に複雑なシェーダを書きたい場合に役に立ちそうな接空間について軽く説明しておきます。頂点シェーダでは、法線のほかに接線(TANGENT)も受け取ることができ、これを用いると接空間上の計算をすることができます。
+
+}
+
++p {
+
+法線と接線のイメージは以下の\figref(`normal-tegaki`);を思い浮かべておけば大丈夫です。
+
+}
+
++figure(`normal-tegaki`)(5cm){法線(normal)と接線(tangent)と従接線(bitangent)}
+
++p {
+
+モデルの表面のある点に接した平面の座標空間で、これが接空間やタンジェント空間などと呼ばれます。法線と接線があれば、あとは外積を求めれば従接線\footnote{資料によっては従接線は従法線(binormal)となっていることもありますが、おそらくこの2つは同じものでしょう…。}が手に入るので、最低限この2つの値を頂点シェーダで受け取ることが多いです。
+
+}
+
++p {
+
+法線マップなどを用いる場合は、テクスチャにこの空間座標系で情報が格納されているので知っておくと応用が広がりそうです。
+
+}
+
+>
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{リムライトの追加 (Toon03)}<
+
++p {
+
+最後にリムライトを実装していきましょう。ライブで後光により輪郭が光るような見栄えになり、テンションが上がります[要出典]。
+
+}
+
++code(`toon03.props`)(```
+ {
+     Properties
+     {
+@@ -10,6 +10,11 @@
+         _ShadowColor("ShadowColor", Color) = (1,1,1,1)
+         _ShadowGradation("ShadowGradation", Range(0, 1)) = 0.0
+         _ShadowShift("ShadowShift", Range(-1, 1)) = 0.0
++
++        [Header(Lim)]
++        _LimColor("LimColor", Color) = (1,1,1,1)
++        _LimForce("LimForce", Range(0, 1)) = 0.1
++        _LimGradation("LimGradation", Range(0, 1)) = 1
+     }
+```){toon03: プロパティ}
+
++p {
+
+\coderef(`toon03.props`);では、リムライト用のパラメータをいくつか追加します。
+
+}
+
++code(`toon03.vars`)(```
+     SubShader
+@@ -34,6 +39,10 @@
+             uniform float _ShadowGradation;
+             uniform float _ShadowShift;
++            uniform float4 _LimColor;
++            uniform float _LimForce;
++            uniform float _LimGradation;
++
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
+```){toon03: シェーダプログラム内のプロパティ変数}
+
++p {
+
+\coderef(`toon03.vars`);では、\coderef(`toon03.props`);で追加したパラメータをシェーダから参照できるようにしています。
+
+}
+
+
++code(`toon03.vary`)(```
+@@ -47,6 +56,7 @@
+                 float4 positionHCS  : SV_POSITION;
+                 float2 uv0          : TEXCOORD0;
+                 float3 normalDirWS  : TEXCOORD1;
++                float3 positionWS   : TEXCOORD2;
+             };
+```){toon03: フラグメントシェーダの入力(頂点シェーダの出力)}
+
++p {
+
+\coderef(`toon03.vary`);では、フラグメントシェーダの入力として新たにワールド空間の頂点座標を追加しています。
+
+}
+
++code(`toon03.vert`)(```
+             Varyings vert(Attributes IN)
+@@ -59,6 +69,9 @@
+                 VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
+                 OUT.normalDirWS = normalInput.normalWS;
+
++                VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS);
++                OUT.positionWS = p.positionWS;
++
+                 return OUT;
+             }
+```){toon03: 頂点シェーダ本体}
+
++p {
+
+\coderef(`toon03.vert`); の頂点シェーダでは、ワールド空間の頂点座標を計算するようになりました。GetVertexPositionInputs は URPで提供されるようになったAPIです。
+
+}
+
++code(`toon03.frag`)(```
+@@ -69,16 +82,23 @@
+                 Light light = GetMainLight();
+                 float3 lightDirWS = normalize(light.direction); // 0.0 -> light dir
+
++                float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - IN.positionWS); // vert -> camera
++
+                 // 平行光源と法線の内積を取る。向きが同じほど1
+                 float NdotL = dot(normalDirWS, lightDirWS);
+                 float diffuse = max(0, smoothstep(_ShadowShift, _ShadowGradation + _ShadowShift, NdotL));
+
++                // 法線と(頂点からカメラ向き)の内積を取る。向きが同じであるほど1。
++                float NdotC = dot(normalDirWS, vertToCameraDirWS);
++                float4 limStepedForce = 1 - max(0, smoothstep(0, _LimGradation, NdotC));
++                float4 limLightedColor = limStepedForce * _LimForce * _LimColor;
++
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+                 float4 mainColor = diffuse * _BaseColor * mainTexColor;
+
+                 float4 shadowColor = (1 - diffuse) * _ShadowColor;
+
+-                float4 resultColor = mainColor + shadowColor;
++                float4 resultColor = mainColor + shadowColor + limLightedColor;
+                 return resultColor;
+             }
+```){toon03: フラグメントシェーダ本体}
+
++p {
+
+\coderef(`toon03.frag`); のフラグメントシェーダでは、新たにリムライトの色を計算するようになりました。こちらは前回の\coderef(`toon02.frag`);の応用で、今度はモデルの表面座標からカメラ方面へのベクトルと法線ベクトルの内積を計算しています。この場合、カメラに向いている面は今までどおり、そうでない面ほどリムライトの色が加算されるようになります。それでは、再び上記の変更を加えたシェーダをマテリアルに指定して、結果を見てみましょう(\figref(`toon03`);)。
+
+}
+
++figure(`toon03`)(10cm){リムライトを実装したシェーダで描画した結果}
+
++p {
+
+いい感じにリムライトが当たっています。えもくなってきましたね。
+
+}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
++subsection{アウトライン (Outline01)}<
+
++p {
+
+なにか物足りないな、というわけでついでにモデルの枠取り(アウトライン)を表示するシェーダも書いてします。ここでは、モデルの視点から反転している部分のポリゴンを少し外側に押し出し、塗りつぶす方法\footnote{他には、ポストエフェクトでエッジを検出してアウトラインを描く方法もあります}でアウトラインを実現します。
+
+}
+
++p {
+
+さて、このアウトラインシェーダはこれまでのトゥーンシェーダとは別のシェーダとして実装します。つまりはモデルのメッシュに2つのマテリアルを与えて、別々のシェーダで描画をするということになります。
+
+}
+
++p {
+
+というのも、Unityでは1つのシェーダに複数のPassを記述することで同じシェーダの中でも異なるロジックの描画を同時に行える(マルチパスシェーダ)のですが、これがURPと相性が良くないらしい\footnote{\url(`https://gaprot.jp/2020/04/14/universalrp-mtoon/`);}ため、別の方法を試してみますというわけです。
+
+}
+
++p {
+
+それではコードです。こちらはToon01のシェーダからの変更点をdiff形式で切り分けたものになります。
+
+}
+
++code(`outline01.props`)(```
+ {
+     Properties
+     {
+-        _BaseColor("BaseColor", Color) = (1,1,1,1)
+-        _MainTex ("Lit (RGB)", 2D) = "white" {}
+-    }
++        _MainTex ("Texture", 2D) = "white" {}
+
++        [Header(Outline)]
++        _OutlineWidth("OutlineWidth", Range(0, 10)) = 0.0
++        _OutlineColor("OutlineColor", Color) = (1,1,1,1)
++        _OutlineTex("Outline (RGB)", 2D) = "black" {}
++    }
+     SubShader
+     {
+         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+
+         Pass
+         {
++            Cull Front
+```){outline01: プロパティ}
+
++p {
+
+\coderef(`outline01.props`);にあるCullは重要です。これは、視点の向きの面を描画しないという指定です。ここで反転した面のみを描画するモードにします。
+
+}
+
++code(`outline01.hlsl`)(```
++
+             HLSLPROGRAM
+
+             #pragma vertex vert
+             #pragma fragment frag
+
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
++            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+-            uniform float4 _BaseColor;
+             uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
+
++            uniform float _OutlineWidth;
++            uniform float4 _OutlineColor;
++            uniform sampler2D _OutlineTex;
++
+             struct Attributes
+             {
+                 float4 positionOS   : POSITION;
++                float3 normalOS     : NORMAL; // OS = object space
++                float4 tangentOS    : TANGENT;
+                 float2 texcoord0    : TEXCOORD0;
+             };
+
+@@ -36,18 +47,47 @@
+
+             Varyings vert(Attributes IN)
+             {
++                float4 positionCS = TransformObjectToHClip(IN.positionOS.xyz);
++
++                VertexNormalInputs n = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
++                // clip <- view <- world <- local
++                // xyz: normal, w: viewDir.x で w を使っているよう
++                // TransformObjectToHClip は w = 1.0 に決め打ちにするため、使うと壊れる
++                float3 normalCS = mul(GetWorldToHClipMatrix(), n.normalWS);
++
++                VertexPositionInputs p = GetVertexPositionInputs(IN.positionOS);
++
++                // vert -> camera
++                float3 vertToCameraDirWS = normalize(_WorldSpaceCameraPos - p.positionWS);
++
++                // "法線"と"頂点からカメラ向き"の内積を取る。向きが同じであるほど1
++                float NdotC = dot(normalize(n.normalWS), vertToCameraDirWS);
++                // カメラと法線がずれるほど1。曖昧な角度のエッジを出さない補正
++                float step = 1 - smoothstep(0.0, 1.0, NdotC);
++
++                float4 outlineTexColor = tex2Dlod(_OutlineTex, float4(TRANSFORM_TEX(IN.texcoord0, _MainTex), 0, 0));
++                // テクスチャの緑成分が太さの割合の減衰具合。緑が濃いほど線がなくなる
++                float outlineRatio = 1.0f - outlineTexColor.g;
++
++                // https://www.videopoetics.com/tutorials/pixel-perfect-outline-shaders-unity/
++                float2 offset = (normalize(normalCS.xy) / _ScreenParams.xy) * _OutlineWidth * positionCS.w * 2;
++
++                // OutLine
+                 Varyings OUT;
+
+-                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
++                OUT.positionHCS = positionCS;
++                OUT.positionHCS.xy += offset * outlineRatio * step;
+```){outline01: シェーダプログラム本体、先頭部分}
+
++p {
+
+\coderef(`outline01.hlsl`);の最後の行にあるOUT.positionHCS.xyの加算が肝です。この加算により頂点位置が押し出され、この押し出された部分と本来のモデルの境目がアウトラインに見えるわけです。
+
+}
+
++p {
+
+この押し出しロジックではクリップ空間のxy座標のみを変更しています。また、頂点を押し出す差分量を表すoffsetの計算もすべてクリップ空間で行っています。このクリップ空間というのが大事で、この時点で空間はカメラから見た位置になっているため、xy平面とみなして法線方向に位置をずらすことによって、カメラから見て均等に頂点が押し出されているようにできます。
+
+}
+
++code(`outline01.hlsl-nokori`)(```
++
+                 OUT.uv0 = IN.texcoord0;
+
+                 return OUT;
+             }
+
+             half4 frag(Varyings IN) : SV_Target
+             {
+                 float4 mainTexColor = tex2D(_MainTex, TRANSFORM_TEX(IN.uv0, _MainTex));
+-                float4 mainColor = _BaseColor * mainTexColor;
++                float4 mainColor = _OutlineColor * mainTexColor;
+
+                 return mainColor;
+             }
+```){outline01: シェーダプログラム本体、残り部分}
+
++p {
+
+\coderef(`outline01.hlsl-nokori`);の残りの部分は、アウトラインの色で塗りつぶすだけですね。
+
+}
+
++p {
+それでは、上記のシェーダを指定したマテリアルを新規に作成して、メッシュに追加してみましょう。\figref(`multi-material`);のようにMaterialsのSizeを増やし、空いたスロットに新規作成したマテリアルを割り当てます\footnote{この方法の欠点としては、複数のサブメッシュを持つメッシュに対しては複数のマテリアルをUnityEditor上で割り当てることができません…。例えば、blenderでは1つのオブジェクトに複数のマテリアルを割り当てるとUnityでは複数のサブメッシュを持つ扱いとなるので、1オブジェクト1マテリアルのつもりで作っておくとこの手法ではスムーズです。}。
+}
+
++figure(`multi-material`)(6cm){UnityEditorでメッシュのマテリアルの割り当てを増やす}
+
++p {
+
+結果は\figref(`outline`);のようになります。
+
+}
+
++figure(`outline`)(10cm){アウトラインを実装したシェーダを加えて描画した結果}
+
++p {
+
+う〜ん、いい感じですね。やりました！
+
+}
+
+>
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++subsection{完成}<
+
++p {
+
+ひとまずこのあたりで一旦完成としましょう。また、ここまでくれば物足りないなと思ってもシェーダに手を加えることができるようになっているはずです…！
+
+}
+
++p {
+
+影をテクスチャでいじることができるような手直しを少し行ったコードをリポジトリに含めておきました。完成図は\figref(`kanseizu`);になります。参考になれば幸いです。
+
+}
+
++figure(`kanseizu`)(10cm){陰影情報を追加し、マテリアルのプロパティを調節するとこのような感じに}
+
+>
+>
+
+>

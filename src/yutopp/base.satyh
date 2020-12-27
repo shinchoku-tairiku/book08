@@ -1,0 +1,13 @@
+@import: ../../shinchoku-tairiku.satyh/shinchoku-tairiku
+
+let-block +code label code caption = '<
+  +code?:(`yutopp:code:` ^ label)(code){#caption;}
+>
+
+let-block +figure label size caption = '<
+  +figure?:(`yutopp:figure:` ^ label)?:(size)(`yutopp/` ^ label ^ `.pdf`){#caption;}
+>
+
+let-inline \ref label = {\ref(`yutopp:` ^ label);}
+let-inline \figref label = {図\ref(`figure:` ^ label);}
+let-inline \coderef label = {コード\ref(`code:` ^ label);}
