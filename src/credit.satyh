@@ -25,5 +25,5 @@ let-block ctx +credit =
     +++ left-block ctx-items len {表紙画像加工} {\url(`http://williamngan.github.io/kubist/`);}
     +++ left-block ctx-items len {表紙フォント} {鉄瓶ゴシック}
   in
-  clear-page +++ %% 必要なければ消す
-  block-skip 18cm +++ block-in ctx k
+  % clear-page +++ %% 必要なければ消す
+  block-skip 9cm +++ block-in ctx k

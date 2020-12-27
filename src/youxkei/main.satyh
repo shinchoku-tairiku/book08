@@ -17,6 +17,8 @@ end = struct
         +code?:(`youxkei:code:` ^ label)(code){#caption;}
     >
 
+    let-block ctx +new-line = clear-page
+
     let-block +youxkei = '<
       +chapter{QRコード魔法陣をスマホで読み取る}{ここに入れる気の利いた名言が思いつかなかったので募集します！良い名言を思いついた方がいたら\url(`https://github.com/shinchoku-tairiku/book08`);までPRをお願いします！ - \@youxkei}<
           +section{はじめに}<
@@ -266,6 +268,8 @@ end = struct
                   見かけたらちらっと覗いてみてください。
               }
           >
+          +new-line;
+          +figure(`mccode_thankyou`)(8cm){読み込んでみてね}
       >
     >
 end
