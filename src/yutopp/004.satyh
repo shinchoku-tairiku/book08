@@ -487,7 +487,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
          OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
          OUT.uv0 = IN.texcoord0;
 
-+        VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangent);
++        VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS);
 +        OUT.normalDirWS = normalInput.normalWS;
 +
          return OUT;
