@@ -598,7 +598,7 @@ URPでは、値の意味する空間を示すsuffix(カッコの中の英語表�
 
 }
 
-+figure(`normal-tegaki`)(5cm){法線(normal)と接線(tangent)と従接線(bitangent)}
++figure(`normal-tegaki`)(6cm){法線(normal)と接線(tangent)と従接線(bitangent)}
 
 +p {
 
